@@ -135,7 +135,3 @@ carbonscope/
 - Advanced analytics
 - Compliance reporting
 - Integration capabilities
-
-## License
-
-[Your License Here]
