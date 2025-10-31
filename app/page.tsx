@@ -45,7 +45,6 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">📊</div>
                 <h3 className="text-xl font-semibold mb-2">
                   Scope 1-3 Tracking
                 </h3>
@@ -55,7 +54,6 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">✓</div>
                 <h3 className="text-xl font-semibold mb-2">Compliance Ready</h3>
                 <p className="text-gray-600">
                   Built-in compliance with major standards including GHG
@@ -63,7 +61,6 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">📈</div>
                 <h3 className="text-xl font-semibold mb-2">
                   Advanced Reporting
                 </h3>
@@ -73,14 +70,12 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">🏢</div>
                 <h3 className="text-xl font-semibold mb-2">Enterprise Grade</h3>
                 <p className="text-gray-600">
                   Designed for SMEs, corporates, and financial institutions.
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">🔒</div>
                 <h3 className="text-xl font-semibold mb-2">
                   Secure & Reliable
                 </h3>
@@ -89,7 +84,6 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="text-4xl mb-4">🔄</div>
                 <h3 className="text-xl font-semibold mb-2">Easy Integration</h3>
                 <p className="text-gray-600">
                   Connect with your existing systems and data sources
