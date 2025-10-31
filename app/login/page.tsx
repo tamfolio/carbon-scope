@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -34,11 +36,17 @@ export default function LoginPage() {
         throw new Error(data?.error || "Login failed");
       }
 
-      // Store token for now; you can switch to next-auth later
-      if (data?.token) localStorage.setItem("cs_token", data.token);
-      setSuccess("Logged in successfully");
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong");
+      // Store token for now; we can switch to next-auth later
+      if (data?.token) {
+        localStorage.setItem("cs_token", data.token);
+        setSuccess("Logged in successfully");
+        // Redirect to dashboard after successful login
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -48,7 +56,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <Link href="/" className="text-3xl font-bold text-green-600 text-center block mb-2">
+          <Link
+            href="/"
+            className="text-3xl font-bold text-green-600 text-center block mb-2"
+          >
             CarbonScope 360
           </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -56,7 +67,10 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{" "}
-            <Link href="/register" className="font-medium text-green-600 hover:text-green-500">
+            <Link
+              href="/register"
+              className="font-medium text-green-600 hover:text-green-500"
+            >
               create a new account
             </Link>
           </p>
@@ -113,13 +127,19 @@ export default function LoginPage() {
                 type="checkbox"
                 className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
                 Remember me
               </label>
             </div>
 
             <div className="text-sm">
-              <Link href="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
+              <Link
+                href="/forgot-password"
+                className="font-medium text-green-600 hover:text-green-500"
+              >
                 Forgot your password?
               </Link>
             </div>
@@ -139,4 +159,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

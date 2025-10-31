@@ -12,13 +12,13 @@ Comprehensive carbon accounting platform designed for SMEs, corporates, and fina
 
 ## Features Implemented (Week 1)
 
-✅ Project setup with Next.js and TypeScript
-✅ Database schema with Prisma (User, Organization, Emission models)
-✅ Authentication system (Register/Login)
-✅ Landing page with modern UI
-✅ API routes for user registration and login
-✅ User management and organization support
-✅ Basic project structure and folder organization
+1. Project setup with Next.js and TypeScript
+2. Database schema with Prisma (User, Organization, Emission models)
+3. Authentication system (Register/Login)
+4. Landing page with modern UI
+5. API routes for user registration and login
+6. User management and organization support in database
+7. Basic project structure and folder organization
 
 ## Getting Started
 
@@ -96,7 +96,7 @@ carbonscope/
 
 ## Environment Variables
 
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - PostgreSQL connection string or supabase connection
 - `JWT_SECRET` - Secret key for JWT tokens
 - `NEXTAUTH_URL` - Application URL
 - `NEXTAUTH_SECRET` - NextAuth secret key
