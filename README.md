@@ -2,7 +2,7 @@
 
 Comprehensive carbon accounting platform designed for SMEs, corporates, and financial institutions. This platform enables users to track, measure, report, and reduce Scope 1-3 emissions with enterprise-grade accuracy, ensuring compliance with standards like PCAF, ISSB, ISO 14064, GHG Protocol, and SOC 2 Type II.
 
-![CarbonScope 360 Screenshot](../screenshots/week1/1.png)
+![CarbonScope 360 Screenshot](screenshots/week1/1.png)
 
 ## Tech Stack
 
