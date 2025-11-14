@@ -1,42 +1,1871 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Trash2,
+  Edit,
+  Search,
+  Download,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Upload,
+  FileSpreadsheet,
+  X,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+  FileDown,
+  History,
+  Copy,
+} from "lucide-react";
+import {
+  emissionCategories,
+  emissionFactors,
+  getCategoriesByScope,
+  type EmissionFactor,
+  type CategoryInfo,
+} from "@/lib/emissionFactors";
+import { getSourcesForCategory } from "@/lib/activityHelpers";
+import { calculateEmissions, formatCO2e } from "@/lib/calculationEngine";
+import { assessDataQuality } from "@/lib/activityHelpers";
+import { cn } from "@/lib/utils";
+
+interface Emission {
+  id: string;
+  scope: string;
+  category: string;
+  activity: string;
+  source: string;
+  quantity: number;
+  unit: string;
+  emissionFactor: number;
+  co2e: number;
+  date: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function EmissionsPage() {
+  // State for emissions data
+  const [emissions, setEmissions] = useState<Emission[]>([]);
+  const [filteredEmissions, setFilteredEmissions] = useState<Emission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // State for add/edit dialog
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // State for form fields
+  const [scope, setScope] = useState<"Scope 1" | "Scope 2" | "Scope 3">(
+    "Scope 1"
+  );
+  const [category, setCategory] = useState("");
+  const [activity, setActivity] = useState("");
+  const [source, setSource] = useState("");
+  const [emissionFactorId, setEmissionFactorId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [unit, setUnit] = useState("");
+  const [date, setDate] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // State for calculated CO2e preview
+  const [previewCO2e, setPreviewCO2e] = useState<number | null>(null);
+
+  // State for filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterScope, setFilterScope] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+
+  // State for alerts
+  const [alert, setAlert] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Available categories and sources based on selection
+  const [availableCategories, setAvailableCategories] = useState<
+    CategoryInfo[]
+  >([]);
+  const [availableSources, setAvailableSources] = useState<EmissionFactor[]>(
+    []
+  );
+
+  // State for bulk import
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<
+    Array<{
+      scope: string;
+      category: string;
+      activity: string;
+      source: string;
+      quantity: number;
+      unit: string;
+      date: string;
+      notes?: string;
+    }>
+  >([]);
+  const [importErrors, setImportErrors] = useState<
+    Array<{ row: number; message: string }>
+  >([]);
+  const [importing, setImporting] = useState(false);
+  const [importHistory, setImportHistory] = useState<
+    Array<{ filename: string; records: number; date: string; status: string }>
+  >([]);
+
+  // State for batch operations
+  const [selectedEmissions, setSelectedEmissions] = useState<string[]>([]);
+  const [batchMode, setBatchMode] = useState(false);
+
+  // State for data quality
+  const [qualityScores, setQualityScores] = useState<
+    Record<
+      string,
+      {
+        score: number;
+        level: string;
+        issues: string[];
+        recommendations: string[];
+      }
+    >
+  >({});
+
+  // Load emissions on mount
+  useEffect(() => {
+    loadEmissions();
+  }, []);
+
+  // Update available categories when scope changes
+  useEffect(() => {
+    const categories = getCategoriesByScope(scope);
+    setAvailableCategories(categories);
+    setCategory("");
+    setSource("");
+    setEmissionFactorId("");
+    setUnit("");
+  }, [scope]);
+
+  // Update available sources when category changes
+  useEffect(() => {
+    if (category) {
+      const sources = getSourcesForCategory(scope, category);
+      setAvailableSources(sources);
+      setSource("");
+      setEmissionFactorId("");
+      setUnit("");
+    } else {
+      setAvailableSources([]);
+    }
+  }, [category, scope]);
+
+  // Update unit when source changes
+  useEffect(() => {
+    if (emissionFactorId) {
+      const factor = emissionFactors.find((f) => f.id === emissionFactorId);
+      if (factor) {
+        setUnit(factor.unit);
+        setSource(factor.source);
+      }
+    }
+  }, [emissionFactorId]);
+
+  // Calculate CO2e preview when quantity or emission factor changes
+  useEffect(() => {
+    if (quantity && emissionFactorId && parseFloat(quantity) > 0) {
+      try {
+        const result = calculateEmissions({
+          quantity: parseFloat(quantity),
+          emissionFactorId,
+        });
+        setPreviewCO2e(result.co2e);
+      } catch (error) {
+        setPreviewCO2e(null);
+      }
+    } else {
+      setPreviewCO2e(null);
+    }
+  }, [quantity, emissionFactorId]);
+
+  // Filter emissions when search term or filters change
+  useEffect(() => {
+    let filtered = [...emissions];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (e) =>
+          e.activity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply scope filter
+    if (filterScope !== "all") {
+      filtered = filtered.filter((e) => e.scope === filterScope);
+    }
+
+    // Apply category filter
+    if (filterCategory !== "all") {
+      filtered = filtered.filter((e) => e.category === filterCategory);
+    }
+
+    setFilteredEmissions(filtered);
+  }, [searchTerm, filterScope, filterCategory, emissions]);
+
+  // Load emissions from API
+  const loadEmissions = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("cs_token");
+      const response = await fetch("/api/emissions?limit=100", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmissions(data.emissions);
+        setFilteredEmissions(data.emissions);
+      } else {
+        showAlert("error", "Failed to load emissions data");
+      }
+    } catch {
+      showAlert("error", "Failed to load emissions data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setScope("Scope 1");
+    setCategory("");
+    setActivity("");
+    setSource("");
+    setEmissionFactorId("");
+    setQuantity("");
+    setUnit("");
+    setDate("");
+    setNotes("");
+    setPreviewCO2e(null);
+    setErrors({});
+    setEditMode(false);
+    setEditingId(null);
+  };
+
+  // Show alert
+  const showAlert = (type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  // Validate form
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!scope) newErrors.scope = "Scope is required";
+    if (!category) newErrors.category = "Category is required";
+    if (!activity || activity.length < 3)
+      newErrors.activity =
+        "Activity description is required (min 3 characters)";
+    if (!source) newErrors.source = "Source is required";
+    if (!emissionFactorId)
+      newErrors.emissionFactorId = "Emission factor is required";
+    if (!quantity || parseFloat(quantity) <= 0)
+      newErrors.quantity = "Quantity must be greater than 0";
+    if (!unit) newErrors.unit = "Unit is required";
+    if (!date) newErrors.date = "Date is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("cs_token");
+      const payload = {
+        scope,
+        category,
+        activity,
+        source,
+        emissionFactorId,
+        quantity: parseFloat(quantity),
+        unit,
+        date: new Date(date).toISOString(),
+        notes: notes || undefined,
+      };
+
+      const url = editMode ? `/api/emissions/${editingId}` : "/api/emissions";
+      const method = editMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        showAlert(
+          "success",
+          editMode
+            ? "Emission updated successfully"
+            : "Emission added successfully"
+        );
+        setDialogOpen(false);
+        resetForm();
+        loadEmissions();
+        // Dispatch event to notify other components (like dashboard)
+        window.dispatchEvent(new CustomEvent("emissionsUpdated"));
+      } else {
+        const data = await response.json();
+        showAlert("error", data.error || "Failed to save emission");
+      }
+    } catch (error) {
+      console.error("Error saving emission:", error);
+      showAlert("error", "Failed to save emission");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle edit
+  const handleEdit = (emission: Emission) => {
+    setEditMode(true);
+    setEditingId(emission.id);
+    setScope(emission.scope as "Scope 1" | "Scope 2" | "Scope 3");
+    setCategory(emission.category);
+    setActivity(emission.activity);
+    setSource(emission.source);
+    setQuantity(emission.quantity.toString());
+    setUnit(emission.unit);
+    setDate(emission.date.split("T")[0]);
+    setNotes(emission.notes || "");
+
+    // Find matching emission factor
+    const factor = emissionFactors.find(
+      (f) =>
+        f.scope === emission.scope &&
+        f.category === emission.category &&
+        f.source === emission.source
+    );
+    if (factor) {
+      setEmissionFactorId(factor.id);
+    }
+
+    setDialogOpen(true);
+  };
+
+  // Handle delete
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this emission record?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("cs_token");
+      if (!token) {
+        showAlert("error", "Authentication required. Please log in again.");
+        return;
+      }
+
+      const response = await fetch(`/api/emissions/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        showAlert("success", "Emission deleted successfully");
+        loadEmissions();
+        // Dispatch event to notify other components (like dashboard)
+        window.dispatchEvent(new CustomEvent("emissionsUpdated"));
+      } else {
+        const data = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        showAlert(
+          "error",
+          data.error || `Failed to delete emission (${response.status})`
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting emission:", error);
+      showAlert(
+        "error",
+        error instanceof Error ? error.message : "Failed to delete emission"
+      );
+    }
+  };
+
+  // Handle file selection for bulk import
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFile(file);
+    setImportPreview([]);
+    setImportErrors([]);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const token = localStorage.getItem("cs_token");
+      const response = await fetch("/api/emissions/import/preview", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setImportPreview(data.preview || []);
+        setImportErrors(data.errors || []);
+      } else {
+        const error = await response.json();
+        showAlert("error", error.error || "Failed to parse file");
+      }
+    } catch (error) {
+      console.error("Error parsing file:", error);
+      showAlert("error", "Failed to parse file. Please check the format.");
+    }
+  };
+
+  // Handle bulk import
+  const handleBulkImport = async () => {
+    if (!importFile || importPreview.length === 0 || importErrors.length > 0) {
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+
+      const token = localStorage.getItem("cs_token");
+      const response = await fetch("/api/emissions/import", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        showAlert(
+          "success",
+          `Successfully imported ${
+            data.imported || importPreview.length
+          } records`
+        );
+
+        // Add to import history
+        setImportHistory([
+          {
+            filename: importFile.name,
+            records: data.imported || importPreview.length,
+            date: new Date().toISOString(),
+            status: "success",
+          },
+          ...importHistory,
+        ]);
+
+        // Reset import state
+        setImportFile(null);
+        setImportPreview([]);
+        setImportErrors([]);
+
+        // Reload emissions
+        loadEmissions();
+      } else {
+        const error = await response.json();
+        showAlert("error", error.error || "Failed to import records");
+      }
+    } catch (error) {
+      console.error("Error importing:", error);
+      showAlert("error", "Failed to import records");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Download template
+  const downloadTemplate = () => {
+    const headers = [
+      "scope",
+      "category",
+      "activity",
+      "source",
+      "quantity",
+      "unit",
+      "emissionFactorId",
+      "date",
+      "notes",
+    ];
+    const csvContent = headers.join(",") + "\n";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "emissions_import_template.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Handle export
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem("cs_token");
+      const response = await fetch("/api/emissions/export?format=csv", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `emissions_export_${
+          new Date().toISOString().split("T")[0]
+        }.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        showAlert("success", "Export completed successfully");
+      } else {
+        showAlert("error", "Failed to export data");
+      }
+    } catch (error) {
+      console.error("Error exporting:", error);
+      showAlert("error", "Failed to export data");
+    }
+  };
+
+  // Assess all data quality
+  const assessAllDataQuality = () => {
+    const scores: Record<
+      string,
+      {
+        score: number;
+        level: string;
+        issues: string[];
+        recommendations: string[];
+      }
+    > = {};
+    filteredEmissions.forEach((emission) => {
+      const factor = emissionFactors.find(
+        (f) =>
+          f.scope === emission.scope &&
+          f.category === emission.category &&
+          f.source === emission.source
+      );
+      if (factor) {
+        const quality = assessDataQuality({
+          quantity: emission.quantity,
+          emissionFactorId: factor.id,
+          date: new Date(emission.date),
+          activity: emission.activity,
+          notes: emission.notes,
+        });
+        scores[emission.id] = quality;
+      }
+    });
+    setQualityScores(scores);
+    showAlert("success", "Data quality assessment completed");
+  };
+
+  // Handle batch delete
+  const handleBatchDelete = async () => {
+    if (selectedEmissions.length === 0) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedEmissions.length} record(s)?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("cs_token");
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedEmissions) {
+        const response = await fetch(`/api/emissions/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        showAlert("success", `Successfully deleted ${successCount} record(s)`);
+        setSelectedEmissions([]);
+        setBatchMode(false);
+        loadEmissions();
+        // Dispatch event to notify other components (like dashboard)
+        window.dispatchEvent(new CustomEvent("emissionsUpdated"));
+      }
+      if (failCount > 0) {
+        showAlert("error", `Failed to delete ${failCount} record(s)`);
+      }
+    } catch (error) {
+      console.error("Error in batch delete:", error);
+      showAlert("error", "Failed to delete records");
+    }
+  };
+
+  // Detect duplicates
+  const detectDuplicates = () => {
+    const duplicates: { emission: Emission; matches: Emission[] }[] = [];
+    const checked = new Set<string>();
+
+    filteredEmissions.forEach((emission) => {
+      if (checked.has(emission.id)) return;
+
+      const matches = filteredEmissions.filter(
+        (e) =>
+          e.id !== emission.id &&
+          e.scope === emission.scope &&
+          e.category === emission.category &&
+          e.source === emission.source &&
+          Math.abs(e.quantity - emission.quantity) < 0.01 &&
+          new Date(e.date).getTime() === new Date(emission.date).getTime()
+      );
+
+      if (matches.length > 0) {
+        duplicates.push({ emission, matches });
+        checked.add(emission.id);
+        matches.forEach((m) => checked.add(m.id));
+      }
+    });
+
+    if (duplicates.length > 0) {
+      const message = `Found ${duplicates.length} potential duplicate(s). Check the console for details.`;
+      showAlert("error", message);
+      console.log("Duplicates found:", duplicates);
+    } else {
+      showAlert("success", "No duplicates found");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Emissions Data</h2>
-            <p className="text-muted-foreground mt-1">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Emissions Data
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Track and manage your carbon emissions data
             </p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Entry
-          </Button>
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Emission
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+              <DialogHeader>
+                <DialogTitle>
+                  {editMode ? "Edit Emission" : "Add New Emission"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editMode
+                    ? "Update the emission record details"
+                    : "Enter the details of your emission activity"}
+                </DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Scope Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="scope">Emission Scope *</Label>
+                  <Select
+                    value={scope}
+                    onValueChange={(value: "Scope 1" | "Scope 2" | "Scope 3") =>
+                      setScope(value)
+                    }
+                  >
+                    <SelectTrigger id="scope">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Scope 1">
+                        Scope 1: Direct Emissions
+                      </SelectItem>
+                      <SelectItem value="Scope 2">
+                        Scope 2: Indirect Energy
+                      </SelectItem>
+                      <SelectItem value="Scope 3">
+                        Scope 3: Other Indirect
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.scope && (
+                    <p className="text-sm text-red-500">{errors.scope}</p>
+                  )}
+                </div>
+
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select
+                    value={category}
+                    onValueChange={setCategory}
+                    disabled={!scope}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.category && (
+                    <p className="text-sm text-red-500">{errors.category}</p>
+                  )}
+                </div>
+
+                {/* Source Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="source">Emission Source *</Label>
+                  <Select
+                    value={emissionFactorId}
+                    onValueChange={setEmissionFactorId}
+                    disabled={!category}
+                  >
+                    <SelectTrigger id="source">
+                      <SelectValue placeholder="Select an emission source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSources.map((src) => (
+                        <SelectItem key={src.id} value={src.id}>
+                          {src.source} ({src.unit})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.source && (
+                    <p className="text-sm text-red-500">{errors.source}</p>
+                  )}
+                </div>
+
+                {/* Activity Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="activity">Activity Description *</Label>
+                  <Input
+                    id="activity"
+                    placeholder="e.g., Office electricity usage for January 2024"
+                    value={activity}
+                    onChange={(e) => setActivity(e.target.value)}
+                  />
+                  {errors.activity && (
+                    <p className="text-sm text-red-500">{errors.activity}</p>
+                  )}
+                </div>
+
+                {/* Quantity and Unit */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity *</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    />
+                    {errors.quantity && (
+                      <p className="text-sm text-red-500">{errors.quantity}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">Unit</Label>
+                    <Input id="unit" value={unit} disabled />
+                  </div>
+                </div>
+
+                {/* CO2e Preview */}
+                {previewCO2e !== null && (
+                  <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                          Calculated CO2e
+                        </p>
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                          {formatCO2e(previewCO2e)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="date">Activity Date *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                  />
+                  {errors.date && (
+                    <p className="text-sm text-red-500">{errors.date}</p>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Input
+                    id="notes"
+                    placeholder="Additional information, data sources, etc."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>{editMode ? "Update" : "Add"} Emission</>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
+        {/* Alert */}
+        {alert && (
+          <Alert variant={alert.type === "error" ? "destructive" : "default"}>
+            {alert.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription>{alert.message}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Bulk Operations & Data Management */}
+        <Tabs defaultValue="import" className="w-full">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <CardTitle>Data Management</CardTitle>
+                  <CardDescription>
+                    Import, export, and manage your emissions data
+                  </CardDescription>
+                </div>
+                <div className="overflow-x-auto -mx-2 px-2 pb-2">
+                  <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 h-auto">
+                    <TabsTrigger value="import" className="text-xs sm:text-sm">
+                      <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Import
+                    </TabsTrigger>
+                    <TabsTrigger value="export" className="text-xs sm:text-sm">
+                      <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      Export
+                    </TabsTrigger>
+                    <TabsTrigger value="quality" className="text-xs sm:text-sm">
+                      <CheckCircle className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Data </span>Quality
+                    </TabsTrigger>
+                    <TabsTrigger value="batch" className="text-xs sm:text-sm">
+                      <Copy className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Batch </span>Operations
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Import Tab */}
+              <TabsContent value="import" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      Bulk Import Emissions
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Upload a CSV or Excel file to import multiple emission
+                      records at once
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadTemplate()}
+                        className="w-full sm:w-auto"
+                      >
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Download Template
+                      </Button>
+                      <label className="cursor-pointer w-full sm:w-auto">
+                        <Button variant="default" asChild className="w-full">
+                          <span>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Choose File
+                          </span>
+                        </Button>
+                        <input
+                          type="file"
+                          accept=".csv,.xlsx,.xls"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
+                      </label>
+                    </div>
+                    {importFile && (
+                      <div className="mt-4 p-4 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileSpreadsheet className="h-5 w-5" />
+                            <span className="font-medium">
+                              {importFile.name}
+                            </span>
+                            <Badge variant="secondary">
+                              {(importFile.size / 1024).toFixed(2)} KB
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setImportFile(null);
+                              setImportPreview([]);
+                              setImportErrors([]);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {importPreview.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h4 className="font-semibold">
+                          Preview ({importPreview.length} records)
+                        </h4>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setImportFile(null);
+                              setImportPreview([]);
+                              setImportErrors([]);
+                            }}
+                            className="flex-1 sm:flex-none"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleBulkImport}
+                            disabled={importing || importErrors.length > 0}
+                            className="flex-1 sm:flex-none"
+                          >
+                            {importing ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <span className="hidden sm:inline">Importing...</span>
+                                <span className="sm:hidden">Import</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Import {importPreview.length} Records</span>
+                                <span className="sm:hidden">Import</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {importErrors.length > 0 && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>
+                            {importErrors.length} record(s) have validation
+                            errors. Please fix them before importing.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="text-xs text-muted-foreground px-3 py-2 bg-muted/50 md:hidden">
+                          Scroll horizontally to view all columns →
+                        </div>
+                        <div className="overflow-x-auto max-h-[400px]">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted sticky top-0">
+                              <tr>
+                                <th className="p-2 text-left text-xs md:text-sm">Row</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Scope</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Category</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Activity</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Source</th>
+                                <th className="p-2 text-right text-xs md:text-sm">Quantity</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Date</th>
+                                <th className="p-2 text-left text-xs md:text-sm">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {importPreview.map((record, index) => {
+                                const hasError = importErrors.some(
+                                  (e) => e.row === index + 1
+                                );
+                                return (
+                                  <tr
+                                    key={index}
+                                    className={cn(
+                                      "border-b",
+                                      hasError && "bg-red-50 dark:bg-red-950/20"
+                                    )}
+                                  >
+                                    <td className="p-2">{index + 1}</td>
+                                    <td className="p-2">
+                                      {String(record.scope)}
+                                    </td>
+                                    <td className="p-2">
+                                      {String(record.category)}
+                                    </td>
+                                    <td className="p-2">
+                                      {String(record.activity)}
+                                    </td>
+                                    <td className="p-2">
+                                      {String(record.source)}
+                                    </td>
+                                    <td className="p-2 text-right">
+                                      {Number(record.quantity)}{" "}
+                                      {String(record.unit)}
+                                    </td>
+                                    <td className="p-2">
+                                      {new Date(
+                                        String(record.date)
+                                      ).toLocaleDateString()}
+                                    </td>
+                                    <td className="p-2">
+                                      {hasError ? (
+                                        <Badge variant="destructive">
+                                          Error
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="default">Valid</Badge>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {importErrors.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-red-600">
+                            Validation Errors:
+                          </h4>
+                          <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                            {importErrors.map((error, idx) => (
+                              <div
+                                key={idx}
+                                className="text-sm text-red-600 p-2 bg-red-50 dark:bg-red-950/20 rounded"
+                              >
+                                Row {error.row}: {error.message}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Import History */}
+                  {importHistory.length > 0 && (
+                    <div className="mt-6 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <History className="h-4 w-4" />
+                        <h4 className="font-semibold">Recent Imports</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {importHistory.slice(0, 5).map((history, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">
+                                  {history.filename}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {history.records} records •{" "}
+                                  {new Date(history.date).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge
+                              variant={
+                                history.status === "success"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {history.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Export Tab */}
+              <TabsContent value="export" className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">
+                      Export Emissions Data
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Export your emissions data in CSV or Excel format
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">
+                          Export Options
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Export Format</Label>
+                          <Select defaultValue="csv">
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="csv">CSV (.csv)</SelectItem>
+                              <SelectItem value="excel">
+                                Excel (.xlsx)
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Date Range (Optional)</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <Input type="date" placeholder="Start date" />
+                            <Input type="date" placeholder="End date" />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Scope Filter (Optional)</Label>
+                          <Select defaultValue="all">
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Scopes</SelectItem>
+                              <SelectItem value="Scope 1">Scope 1</SelectItem>
+                              <SelectItem value="Scope 2">Scope 2</SelectItem>
+                              <SelectItem value="Scope 3">Scope 3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Button className="w-full" onClick={handleExport}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Data
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">
+                          Export Preview
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Total Records:
+                            </span>
+                            <span className="font-medium">
+                              {filteredEmissions.length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Scope 1:
+                            </span>
+                            <span className="font-medium">
+                              {
+                                filteredEmissions.filter(
+                                  (e) => e.scope === "Scope 1"
+                                ).length
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Scope 2:
+                            </span>
+                            <span className="font-medium">
+                              {
+                                filteredEmissions.filter(
+                                  (e) => e.scope === "Scope 2"
+                                ).length
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Scope 3:
+                            </span>
+                            <span className="font-medium">
+                              {
+                                filteredEmissions.filter(
+                                  (e) => e.scope === "Scope 3"
+                                ).length
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Data Quality Tab */}
+              <TabsContent value="quality" className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">
+                      Data Quality Assessment
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Review data quality scores and recommendations for your
+                      emissions records
+                    </p>
+                  </div>
+
+                  <Button variant="outline" onClick={assessAllDataQuality} className="w-full sm:w-auto">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Assess All Records
+                  </Button>
+
+                  {Object.keys(qualityScores).length > 0 && (
+                    <div className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">
+                              High Quality
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-green-600">
+                              {
+                                Object.values(qualityScores).filter(
+                                  (q) => q.level === "High"
+                                ).length
+                              }
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">
+                              Medium Quality
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-yellow-600">
+                              {
+                                Object.values(qualityScores).filter(
+                                  (q) => q.level === "Medium"
+                                ).length
+                              }
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">
+                              Low Quality
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold text-red-600">
+                              {
+                                Object.values(qualityScores).filter(
+                                  (q) => q.level === "Low"
+                                ).length
+                              }
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h4 className="font-semibold">
+                          Quality Issues & Recommendations
+                        </h4>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                          {filteredEmissions.map((emission) => {
+                            const quality = qualityScores[emission.id];
+                            if (!quality || quality.level === "High")
+                              return null;
+                            return (
+                              <Card key={emission.id}>
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="font-medium">
+                                        {emission.activity}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {emission.scope} •{" "}
+                                        {new Date(
+                                          emission.date
+                                        ).toLocaleDateString()}
+                                      </p>
+                                      <div className="mt-2 space-y-1">
+                                        {quality.issues.map(
+                                          (issue: string, idx: number) => (
+                                            <div
+                                              key={idx}
+                                              className="flex items-start gap-2 text-sm"
+                                            >
+                                              <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                                              <span>{issue}</span>
+                                            </div>
+                                          )
+                                        )}
+                                        {quality.recommendations.map(
+                                          (rec: string, idx: number) => (
+                                            <div
+                                              key={idx}
+                                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                                            >
+                                              <Info className="h-4 w-4 mt-0.5" />
+                                              <span>{rec}</span>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        quality.level === "High"
+                                          ? "default"
+                                          : quality.level === "Medium"
+                                          ? "secondary"
+                                          : "destructive"
+                                      }
+                                    >
+                                      {quality.score}/100
+                                    </Badge>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Batch Operations Tab */}
+              <TabsContent value="batch" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">
+                        Batch Operations
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Select multiple records to perform batch actions
+                      </p>
+                    </div>
+                    <Button
+                      variant={batchMode ? "default" : "outline"}
+                      onClick={() => {
+                        setBatchMode(!batchMode);
+                        setSelectedEmissions([]);
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      {batchMode ? "Cancel Selection" : "Enable Batch Mode"}
+                    </Button>
+                  </div>
+
+                  {batchMode && (
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <span className="font-medium">
+                          {selectedEmissions.length} record(s) selected
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleBatchDelete}
+                          disabled={selectedEmissions.length === 0}
+                          className="w-full sm:w-auto"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Selected
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Duplicate Detection */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        Duplicate Detection
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        variant="outline"
+                        onClick={detectDuplicates}
+                        className="w-full"
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Scan for Duplicates
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </CardContent>
+          </Card>
+        </Tabs>
+
+        {/* Filters and Search */}
         <Card>
           <CardHeader>
-            <CardTitle>Coming Soon</CardTitle>
-            <CardDescription>
-              Emissions data management interface will be available in Week 3
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle>Emissions Records</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              This page will include emission data entry forms, bulk import, and data visualization.
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-3 mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search emissions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterScope} onValueChange={setFilterScope}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="All Scopes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Scopes</SelectItem>
+                  <SelectItem value="Scope 1">Scope 1</SelectItem>
+                  <SelectItem value="Scope 2">Scope 2</SelectItem>
+                  <SelectItem value="Scope 3">Scope 3</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {emissionCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Emissions Table */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredEmissions.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  No emissions data found. Add your first emission record to get
+                  started.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        {batchMode && (
+                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedEmissions.length ===
+                                  filteredEmissions.length &&
+                                filteredEmissions.length > 0
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedEmissions(
+                                    filteredEmissions.map((e) => e.id)
+                                  );
+                                } else {
+                                  setSelectedEmissions([]);
+                                }
+                              }}
+                              className="rounded"
+                            />
+                          </th>
+                        )}
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                          Date
+                        </th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                          Activity
+                        </th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                          Scope
+                        </th>
+                        <th className="text-left p-3 text-sm font-medium text-muted-foreground">
+                          Source
+                        </th>
+                        <th className="text-right p-3 text-sm font-medium text-muted-foreground">
+                          Quantity
+                        </th>
+                        <th className="text-right p-3 text-sm font-medium text-muted-foreground">
+                          CO2e
+                        </th>
+                        <th className="text-right p-3 text-sm font-medium text-muted-foreground">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredEmissions.map((emission) => (
+                        <tr
+                          key={emission.id}
+                          className="border-b hover:bg-muted/50"
+                        >
+                          {batchMode && (
+                            <td className="p-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedEmissions.includes(emission.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedEmissions([
+                                      ...selectedEmissions,
+                                      emission.id,
+                                    ]);
+                                  } else {
+                                    setSelectedEmissions(
+                                      selectedEmissions.filter(
+                                        (id) => id !== emission.id
+                                      )
+                                    );
+                                  }
+                                }}
+                                className="rounded"
+                              />
+                            </td>
+                          )}
+                          <td className="p-3 text-sm">
+                            {new Date(emission.date).toLocaleDateString()}
+                          </td>
+                          <td className="p-3 text-sm">{emission.activity}</td>
+                          <td className="p-3">
+                            <Badge
+                              className={cn(
+                                emission.scope === "Scope 1" &&
+                                  "border-blue-500 bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300",
+                                emission.scope === "Scope 2" &&
+                                  "border-yellow-500 bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-950 dark:text-yellow-300",
+                                emission.scope === "Scope 3" &&
+                                  "border-purple-500 bg-purple-100 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300"
+                              )}
+                              variant="outline"
+                            >
+                              {emission.scope}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-sm">{emission.source}</td>
+                          <td className="p-3 text-sm text-right">
+                            {emission.quantity.toLocaleString()} {emission.unit}
+                          </td>
+                          <td className="p-3 text-sm text-right font-medium">
+                            {formatCO2e(emission.co2e)}
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(emission)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(emission.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {filteredEmissions.map((emission) => (
+                    <Card key={emission.id} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Header with scope and actions */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              {batchMode && (
+                                <input
+                                  type="checkbox"
+                                  checked={selectedEmissions.includes(emission.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedEmissions([
+                                        ...selectedEmissions,
+                                        emission.id,
+                                      ]);
+                                    } else {
+                                      setSelectedEmissions(
+                                        selectedEmissions.filter(
+                                          (id) => id !== emission.id
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  className="rounded"
+                                />
+                              )}
+                              <Badge
+                                className={cn(
+                                  emission.scope === "Scope 1" &&
+                                    "border-blue-500 bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300",
+                                  emission.scope === "Scope 2" &&
+                                    "border-yellow-500 bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-950 dark:text-yellow-300",
+                                  emission.scope === "Scope 3" &&
+                                    "border-purple-500 bg-purple-100 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300"
+                                )}
+                                variant="outline"
+                              >
+                                {emission.scope}
+                              </Badge>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(emission)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(emission.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Activity */}
+                          <div>
+                            <p className="font-medium text-sm">{emission.activity}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(emission.date).toLocaleDateString()}
+                            </p>
+                          </div>
+
+                          {/* Details Grid */}
+                          <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Source</p>
+                              <p className="text-sm font-medium">{emission.source}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">Quantity</p>
+                              <p className="text-sm font-medium">
+                                {emission.quantity.toLocaleString()} {emission.unit}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* CO2e */}
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-muted-foreground">Total CO2e</p>
+                            <p className="text-lg font-bold text-primary">
+                              {formatCO2e(emission.co2e)}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <style jsx global>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
     </DashboardLayout>
   );
 }
-

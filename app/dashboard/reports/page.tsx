@@ -1,7 +1,13 @@
 "use client";
 
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function ReportsPage() {
   return (
@@ -18,12 +24,13 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Coming Soon</CardTitle>
             <CardDescription>
-              Report generation features will be available in Week 4
+              Report generation features will be available in Week 5
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              This page will include GHG Protocol, ISSB, ISO 14064, and custom report generation.
+              This page will include GHG Protocol, ISSB, ISO 14064, and custom
+              report generation.
             </p>
           </CardContent>
         </Card>
@@ -31,4 +38,3 @@ export default function ReportsPage() {
     </DashboardLayout>
   );
 }
-

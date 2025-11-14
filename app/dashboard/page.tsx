@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
-  TrendingDown,
   Activity,
   Cloud,
   Factory,
@@ -18,31 +22,34 @@ import {
   Zap,
   Plus,
   Download,
-  Calendar,
-  AlertTriangle,
-  CheckCircle2,
   ArrowUpRight,
   ArrowDownRight,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock data for charts
-const monthlyEmissions = [
-  { month: "Jan", scope1: 45, scope2: 32, scope3: 78 },
-  { month: "Feb", scope1: 52, scope2: 35, scope3: 82 },
-  { month: "Mar", scope1: 48, scope2: 30, scope3: 75 },
-  { month: "Apr", scope1: 61, scope2: 42, scope3: 95 },
-  { month: "May", scope1: 55, scope2: 38, scope3: 88 },
-  { month: "Jun", scope1: 67, scope2: 48, scope3: 102 },
-];
-
-const recentActivities = [
-  { id: 1, type: "added", description: "New emission data entry for June 2024", time: "2 hours ago", icon: Plus },
-  { id: 2, type: "report", description: "Q2 2024 report generated", time: "5 hours ago", icon: Download },
-  { id: 3, type: "alert", description: "Scope 3 emissions exceeded target", time: "1 day ago", icon: AlertTriangle },
-  { id: 4, type: "success", description: "Carbon reduction goal achieved", time: "2 days ago", icon: CheckCircle2 },
-];
+interface EmissionsStats {
+  summary: {
+    totalCO2e: number;
+    scope1: number;
+    scope2: number;
+    scope3: number;
+    count: number;
+  };
+  topCategories: Array<{ category: string; co2e: number }>;
+  topSources: Array<{ source: string; co2e: number }>;
+  timeSeries: Array<{
+    period: string;
+    scope1: number;
+    scope2: number;
+    scope3: number;
+    total: number;
+  }>;
+  periodType: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+}
 
 interface MetricCardProps {
   title: string;
@@ -53,9 +60,20 @@ interface MetricCardProps {
   color: string;
   bgColor: string;
   delay: number;
+  progress?: number; // Actual progress percentage
 }
 
-function MetricCard({ title, value, unit, change, icon: Icon, color, bgColor, delay }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  unit,
+  change,
+  icon: Icon,
+  color,
+  bgColor,
+  delay,
+  progress: actualProgress = 0,
+}: MetricCardProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -67,70 +85,55 @@ function MetricCard({ title, value, unit, change, icon: Icon, color, bgColor, de
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {
-        setProgress(Math.random() * 40 + 30); // Random progress between 30-70%
+        setProgress(actualProgress); // Use actual progress value
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isVisible]);
+  }, [isVisible, actualProgress]);
 
   return (
-    <Card 
+    <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group cursor-pointer border-l-2",
+        "relative overflow-hidden transition-all duration-300 hover:shadow-lg group cursor-pointer border-2",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         color
       )}
       style={{ transitionDelay: `${delay}ms` }}
     >
-      {/* Animated gradient background */}
-      <div className={cn(
-        "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300",
-        bgColor
-      )} />
-      
-      {/* Sparkle effect on hover */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-      </div>
-
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={cn(
-          "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-12",
-          bgColor
-        )}>
-          <Icon className={cn("h-5 w-5", color.replace("border-l-", "text-"))} />
-        </div>
+        <Icon
+          className={cn("h-6 w-6", color.replace("border-", "text-"))}
+        />
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold mb-1 transition-all duration-300 group-hover:scale-105">
+        <div className="text-3xl font-bold mb-1">
           {value}
           <span className="text-lg text-muted-foreground ml-1">{unit}</span>
         </div>
-        
+
         <div className="flex items-center text-xs text-muted-foreground mt-2 mb-3">
           {change > 0 ? (
-            <ArrowUpRight className="mr-1 h-4 w-4 text-red-600 animate-bounce" />
+            <ArrowUpRight className="mr-1 h-4 w-4 text-red-600" />
           ) : (
-            <ArrowDownRight className="mr-1 h-4 w-4 text-green-600 animate-bounce" />
+            <ArrowDownRight className="mr-1 h-4 w-4 text-green-600" />
           )}
-          <span className={cn(
-            "font-medium",
-            change > 0 ? "text-red-600" : "text-green-600"
-          )}>
+          <span
+            className={cn(
+              "font-medium",
+              change > 0 ? "text-red-600" : "text-green-600"
+            )}
+          >
             {Math.abs(change)}%
           </span>
           <span className="ml-1">from last month</span>
         </div>
-        
-        {/* Animated progress bar */}
-        <div className="relative">
-          <Progress 
-            value={progress} 
-            className="h-2 transition-all duration-1000" 
-          />
-          <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-        </div>
+
+        {/* Progress bar */}
+        <Progress
+          value={progress}
+          className="h-2 transition-all duration-1000"
+        />
       </CardContent>
     </Card>
   );
@@ -139,7 +142,32 @@ function MetricCard({ title, value, unit, change, icon: Icon, color, bgColor, de
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [chartHeight, setChartHeight] = useState(300);
+  // const [chartHeight, setChartHeight] = useState(300);
+  const [stats, setStats] = useState<EmissionsStats | null>(null);
+  const [recentEmissions, setRecentEmissions] = useState<any[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<"7" | "30" | "180">(
+    "30"
+  );
+  const [periodType, setPeriodType] = useState<"day" | "week" | "month">("day");
+
+  // Helper function to format CO2e values
+  const formatEmissionValue = (
+    kgCO2e: number
+  ): { value: string; unit: string } => {
+    if (kgCO2e >= 1000) {
+      // Show in tonnes for values >= 1000 kg
+      return {
+        value: (kgCO2e / 1000).toFixed(2),
+        unit: "tCO₂e",
+      };
+    } else {
+      // Show in kg for values < 1000 kg
+      return {
+        value: kgCO2e.toFixed(2),
+        unit: "kg CO₂e",
+      };
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("cs_token");
@@ -147,8 +175,92 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-    setLoading(false);
+    loadDashboardData(token);
+
+    // Refresh data when page becomes visible (user returns from emissions page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        const currentToken = localStorage.getItem("cs_token");
+        if (currentToken) {
+          loadDashboardData(currentToken);
+        }
+      }
+    };
+
+    // Refresh data when window gains focus (handles navigation between pages)
+    const handleFocus = () => {
+      const currentToken = localStorage.getItem("cs_token");
+      if (currentToken) {
+        loadDashboardData(currentToken);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [router]);
+
+  // Determine period type based on selected period
+  useEffect(() => {
+    if (selectedPeriod === "7") {
+      setPeriodType("day");
+    } else if (selectedPeriod === "30") {
+      setPeriodType("day");
+    } else {
+      setPeriodType("month");
+    }
+  }, [selectedPeriod]);
+
+  // Reload data when period changes
+  useEffect(() => {
+    const token = localStorage.getItem("cs_token");
+    if (token && !loading) {
+      setLoading(true);
+      loadDashboardData(token);
+    }
+  }, [selectedPeriod, periodType]);
+
+  const loadDashboardData = async (token: string) => {
+    try {
+      // Fetch emissions statistics with period
+      const statsResponse = await fetch(
+        `/api/emissions/stats?days=${selectedPeriod}&period=${periodType}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData);
+      }
+
+      // Fetch recent emissions
+      const emissionsResponse = await fetch(
+        "/api/emissions?limit=5&sortBy=createdAt&sortOrder=desc",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (emissionsResponse.ok) {
+        const emissionsData = await emissionsResponse.json();
+        setRecentEmissions(emissionsData.emissions);
+      }
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -156,7 +268,9 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-4">
             <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
+            <p className="text-muted-foreground animate-pulse">
+              Loading your dashboard...
+            </p>
           </div>
         </div>
       </DashboardLayout>
@@ -173,15 +287,15 @@ export default function DashboardPage() {
               Welcome back!
             </h2>
             <p className="text-muted-foreground mt-1">
-              Here's your carbon emissions overview for June 2024
+              Here's your carbon emissions overview for November 2025
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-              <Calendar className="mr-2 h-4 w-4" />
-              Last 30 days
-            </Button>
-            <Button size="sm" className="hover:scale-105 transition-transform bg-gradient-to-r from-primary to-green-700 hover:from-primary/90 hover:to-green-700/90">
+            <Button
+              size="sm"
+              className="hover:scale-105 transition-transform bg-gradient-to-r from-primary to-green-700 hover:from-primary/90 hover:to-green-700/90"
+              onClick={() => router.push("/dashboard/emissions")}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Data
             </Button>
@@ -190,354 +304,218 @@ export default function DashboardPage() {
 
         {/* Key Metrics with staggered animation */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Total Emissions"
-            value="217.5"
-            unit="tCO₂e"
-            change={8.2}
-            icon={Cloud}
-            color="border-l-primary"
-            bgColor="bg-gradient-to-br from-primary/20 to-green-700/20"
-            delay={0}
-          />
-          <MetricCard
-            title="Scope 1"
-            value="67.0"
-            unit="tCO₂e"
-            change={3.1}
-            icon={Factory}
-            color="border-l-blue-500"
-            bgColor="bg-gradient-to-br from-blue-500/20 to-blue-700/20"
-            delay={100}
-          />
-          <MetricCard
-            title="Scope 2"
-            value="48.5"
-            unit="tCO₂e"
-            change={-2.4}
-            icon={Zap}
-            color="border-l-yellow-500"
-            bgColor="bg-gradient-to-br from-yellow-500/20 to-yellow-700/20"
-            delay={200}
-          />
-          <MetricCard
-            title="Scope 3"
-            value="102.0"
-            unit="tCO₂e"
-            change={5.7}
-            icon={Truck}
-            color="border-l-purple-500"
-            bgColor="bg-gradient-to-br from-purple-500/20 to-purple-700/20"
-            delay={300}
-          />
+          {(() => {
+            const totalFormatted = formatEmissionValue(
+              stats?.summary.totalCO2e || 0
+            );
+            const scope1Formatted = formatEmissionValue(
+              stats?.summary.scope1 || 0
+            );
+            const scope2Formatted = formatEmissionValue(
+              stats?.summary.scope2 || 0
+            );
+            const scope3Formatted = formatEmissionValue(
+              stats?.summary.scope3 || 0
+            );
+
+            const total = stats?.summary.totalCO2e || 0;
+            const scope1Progress =
+              total > 0 ? (stats!.summary.scope1 / total) * 100 : 0;
+            const scope2Progress =
+              total > 0 ? (stats!.summary.scope2 / total) * 100 : 0;
+            const scope3Progress =
+              total > 0 ? (stats!.summary.scope3 / total) * 100 : 0;
+            const totalProgress =
+              stats?.summary.count || 0 > 0
+                ? Math.min((stats?.summary.count || 0) * 10, 100)
+                : 0;
+
+            return (
+              <>
+                <MetricCard
+                  title="Total Emissions"
+                  value={totalFormatted.value}
+                  unit={totalFormatted.unit}
+                  change={8.2}
+                  icon={Cloud}
+                  color="border-primary"
+                  bgColor=""
+                  delay={0}
+                  progress={totalProgress}
+                />
+                <MetricCard
+                  title="Scope 1"
+                  value={scope1Formatted.value}
+                  unit={scope1Formatted.unit}
+                  change={3.1}
+                  icon={Factory}
+                  color="border-blue-500"
+                  bgColor=""
+                  delay={100}
+                  progress={scope1Progress}
+                />
+                <MetricCard
+                  title="Scope 2"
+                  value={scope2Formatted.value}
+                  unit={scope2Formatted.unit}
+                  change={-2.4}
+                  icon={Zap}
+                  color="border-yellow-500"
+                  bgColor=""
+                  delay={200}
+                  progress={scope2Progress}
+                />
+                <MetricCard
+                  title="Scope 3"
+                  value={scope3Formatted.value}
+                  unit={scope3Formatted.unit}
+                  change={5.7}
+                  icon={Truck}
+                  color="border-purple-500"
+                  bgColor=""
+                  delay={300}
+                  progress={scope3Progress}
+                />
+              </>
+            );
+          })()}
         </div>
 
-        {/* Charts and Activity with slide-up animation */}
-        <div className="grid gap-6 lg:grid-cols-7 animate-slide-up" style={{ animationDelay: '400ms' }}>
-          {/* Emissions Chart */}
-          <Card className="lg:col-span-4 hover:shadow-xl transition-all duration-300 group">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Emissions Trend
-                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  </CardTitle>
-                  <CardDescription>Monthly carbon emissions by scope</CardDescription>
-                </div>
-                <Activity className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="bar" className="space-y-4">
-                <TabsList>
-                  <TabsTrigger value="bar" className="data-[state=active]:bg-primary">Bar Chart</TabsTrigger>
-                  <TabsTrigger value="line">Line Chart</TabsTrigger>
-                </TabsList>
-                <TabsContent value="bar" className="space-y-4">
-                  <div className="h-[300px] flex items-end justify-between gap-2 relative">
-                    {monthlyEmissions.map((data, index) => {
-                      const total = data.scope1 + data.scope2 + data.scope3;
-                      const maxTotal = Math.max(...monthlyEmissions.map(d => d.scope1 + d.scope2 + d.scope3));
-                      const height = (total / maxTotal) * 100;
-                      
+        {/* Recent Emissions and Quick Actions in one row */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Recent Emissions with slide-up animation */}
+          <div className="animate-slide-up" style={{ animationDelay: "400ms" }}>
+            <Card className="hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Recent Emissions
+                  <Badge variant="secondary" className="animate-pulse">
+                    Live
+                  </Badge>
+                </CardTitle>
+                <CardDescription>Latest emission entries</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentEmissions && recentEmissions.length > 0 ? (
+                    recentEmissions.map((emission: any, index: number) => {
+                      const daysAgo = Math.floor(
+                        (new Date().getTime() -
+                          new Date(emission.createdAt).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      );
+                      const timeAgo =
+                        daysAgo === 0
+                          ? "Today"
+                          : daysAgo === 1
+                          ? "Yesterday"
+                          : `${daysAgo} days ago`;
+
                       return (
-                        <div 
-                          key={index} 
-                          className="flex-1 flex flex-col items-center justify-end gap-2 group/bar cursor-pointer h-full"
+                        <div
+                          key={emission.id}
+                          className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent transition-all duration-300 cursor-pointer group/activity animate-fade-in-right"
+                          style={{ animationDelay: `${index * 100}ms` }}
                         >
-                          <div 
-                            className="w-full flex flex-col-reverse gap-0.5 transition-all duration-500 hover:scale-105 origin-bottom min-h-[20px]"
-                            style={{ 
-                              height: `${height}%`,
-                              animation: `growUp 0.8s ease-out ${index * 0.1}s both`
-                            }}
+                          <div
+                            className={cn(
+                              "rounded-full p-2 transition-all duration-300 group-hover/activity:scale-110",
+                              emission.scope === "Scope 1" &&
+                                "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+                              emission.scope === "Scope 2" &&
+                                "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
+                              emission.scope === "Scope 3" &&
+                                "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                            )}
                           >
-                            <div
-                              className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-b group-hover/bar:from-blue-600 group-hover/bar:to-blue-500 transition-all duration-300 shadow-lg flex-shrink-0"
-                              style={{ height: `${(data.scope1 / total) * 100}%`, minHeight: '8px' }}
-                              title={`Scope 1: ${data.scope1}`}
-                            />
-                            <div
-                              className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 group-hover/bar:from-yellow-600 group-hover/bar:to-yellow-500 transition-all duration-300 shadow-lg flex-shrink-0"
-                              style={{ height: `${(data.scope2 / total) * 100}%`, minHeight: '8px' }}
-                              title={`Scope 2: ${data.scope2}`}
-                            />
-                            <div
-                              className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t group-hover/bar:from-purple-600 group-hover/bar:to-purple-500 transition-all duration-300 shadow-lg flex-shrink-0"
-                              style={{ height: `${(data.scope3 / total) * 100}%`, minHeight: '8px' }}
-                              title={`Scope 3: ${data.scope3}`}
-                            />
+                            <Plus className="h-4 w-4" />
                           </div>
-                          <span className="text-xs text-muted-foreground font-medium group-hover/bar:text-primary transition-colors flex-shrink-0">
-                            {data.month}
-                          </span>
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium leading-none group-hover/activity:text-primary transition-colors truncate">
+                              {emission.activity}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {emission.scope}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {(emission.co2e / 1000).toFixed(2)} t CO₂e
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {timeAgo}
+                            </p>
+                          </div>
+                          <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/activity:opacity-100 transition-opacity" />
                         </div>
                       );
-                    })}
-                  </div>
-                  <div className="flex items-center justify-center gap-6 text-xs">
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-blue-400 shadow" />
-                      <span className="font-medium">Scope 1</span>
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">No recent emissions</p>
                     </div>
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-yellow-500 to-yellow-400 shadow" />
-                      <span className="font-medium">Scope 2</span>
-                    </div>
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 to-purple-400 shadow" />
-                      <span className="font-medium">Scope 3</span>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="line" className="space-y-4">
-                  <div className="h-[300px] relative">
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 flex flex-col justify-between py-4">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="border-b border-dashed border-muted opacity-30" />
-                      ))}
-                    </div>
-                    
-                    {/* SVG Line Chart */}
-                    <svg className="w-full h-full" viewBox="0 0 600 300" preserveAspectRatio="none">
-                      <defs>
-                        {/* Gradients for each scope */}
-                        <linearGradient id="scope1Gradient" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="scope2Gradient" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="rgb(234, 179, 8)" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="rgb(234, 179, 8)" stopOpacity="0" />
-                        </linearGradient>
-                        <linearGradient id="scope3Gradient" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      
-                      {/* Scope 1 Area */}
-                      <path
-                        d="M 0 230 L 100 210 L 200 220 L 300 190 L 400 200 L 500 180 L 600 180 L 600 300 L 0 300 Z"
-                        fill="url(#scope1Gradient)"
-                        className="animate-draw-area"
-                        style={{ animationDelay: '0.2s' }}
-                      />
-                      
-                      {/* Scope 2 Area */}
-                      <path
-                        d="M 0 200 L 100 185 L 200 190 L 300 165 L 400 175 L 500 160 L 600 155 L 600 300 L 0 300 Z"
-                        fill="url(#scope2Gradient)"
-                        className="animate-draw-area"
-                        style={{ animationDelay: '0.4s' }}
-                      />
-                      
-                      {/* Scope 3 Area */}
-                      <path
-                        d="M 0 150 L 100 135 L 200 145 L 300 110 L 400 125 L 500 100 L 600 95 L 600 300 L 0 300 Z"
-                        fill="url(#scope3Gradient)"
-                        className="animate-draw-area"
-                        style={{ animationDelay: '0.6s' }}
-                      />
-                      
-                      {/* Scope 1 Line */}
-                      <path
-                        d="M 0 230 L 100 210 L 200 220 L 300 190 L 400 200 L 500 180 L 600 180"
-                        fill="none"
-                        stroke="rgb(59, 130, 246)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="animate-draw-line"
-                        style={{ animationDelay: '0.2s' }}
-                      />
-                      
-                      {/* Scope 2 Line */}
-                      <path
-                        d="M 0 200 L 100 185 L 200 190 L 300 165 L 400 175 L 500 160 L 600 155"
-                        fill="none"
-                        stroke="rgb(234, 179, 8)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="animate-draw-line"
-                        style={{ animationDelay: '0.4s' }}
-                      />
-                      
-                      {/* Scope 3 Line */}
-                      <path
-                        d="M 0 150 L 100 135 L 200 145 L 300 110 L 400 125 L 500 100 L 600 95"
-                        fill="none"
-                        stroke="rgb(168, 85, 247)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="animate-draw-line"
-                        style={{ animationDelay: '0.6s' }}
-                      />
-                      
-                      {/* Data points */}
-                      {monthlyEmissions.map((_, index) => {
-                        const x = (index * 100) + 100;
-                        const points = [
-                          { y: [230, 210, 220, 190, 200, 180][index], color: 'rgb(59, 130, 246)' },
-                          { y: [200, 185, 190, 165, 175, 160][index], color: 'rgb(234, 179, 8)' },
-                          { y: [150, 135, 145, 110, 125, 100][index], color: 'rgb(168, 85, 247)' },
-                        ];
-                        
-                        return points.map((point, i) => (
-                          <g key={`${index}-${i}`}>
-                            <circle
-                              cx={x}
-                              cy={point.y}
-                              r="6"
-                              fill="white"
-                              stroke={point.color}
-                              strokeWidth="3"
-                              className="animate-scale-in hover:r-8 transition-all cursor-pointer"
-                              style={{ animationDelay: `${0.8 + index * 0.1}s` }}
-                            />
-                            <circle
-                              cx={x}
-                              cy={point.y}
-                              r="3"
-                              fill={point.color}
-                              className="animate-scale-in opacity-0 hover:opacity-100 transition-opacity"
-                              style={{ animationDelay: `${0.8 + index * 0.1}s` }}
-                            />
-                          </g>
-                        ));
-                      })}
-                    </svg>
-                    
-                    {/* X-axis labels */}
-                    <div className="absolute bottom-0 left-0 right-0 flex justify-between px-12 text-xs text-muted-foreground">
-                      {monthlyEmissions.map((data, index) => (
-                        <span 
-                          key={index}
-                          className="animate-fade-in font-medium"
-                          style={{ animationDelay: `${1 + index * 0.1}s` }}
-                        >
-                          {data.month}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-6 text-xs">
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-blue-400 shadow" />
-                      <span className="font-medium">Scope 1</span>
-                    </div>
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-yellow-500 to-yellow-400 shadow" />
-                      <span className="font-medium">Scope 2</span>
-                    </div>
-                    <div className="flex items-center gap-2 hover:scale-110 transition-transform cursor-pointer">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 to-purple-400 shadow" />
-                      <span className="font-medium">Scope 3</span>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Recent Activity */}
-          <Card className="lg:col-span-3 hover:shadow-xl transition-all duration-300">
+          {/* Quick Actions with scale animation */}
+          <Card
+            className="hover:shadow-xl transition-all duration-300 animate-slide-up"
+            style={{ animationDelay: "600ms" }}
+          >
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Recent Activity
-                <Badge variant="secondary" className="animate-pulse">Live</Badge>
-              </CardTitle>
-              <CardDescription>Latest updates and notifications</CardDescription>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common tasks and operations</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div 
-                    key={activity.id} 
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent transition-all duration-300 cursor-pointer group/activity animate-fade-in-right"
+              <div className="grid gap-4 grid-cols-2">
+                {[
+                  {
+                    icon: Plus,
+                    label: "Add Emission Data",
+                    color:
+                      "hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950 dark:hover:text-blue-300",
+                  },
+                  {
+                    icon: Download,
+                    label: "Generate Report",
+                    color:
+                      "hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950 dark:hover:text-purple-300",
+                  },
+                  {
+                    icon: Activity,
+                    label: "View Analytics",
+                    color:
+                      "hover:border-green-500 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950 dark:hover:text-green-300",
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: "Set Goals",
+                    color:
+                      "hover:border-orange-500 hover:bg-orange-50 hover:text-orange-700 dark:hover:bg-orange-950 dark:hover:text-orange-300",
+                  },
+                ].map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className={cn(
+                      "h-28 flex flex-col items-center justify-center gap-3 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg",
+                      action.color
+                    )}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div
-                      className={cn(
-                        "rounded-full p-2 transition-all duration-300 group-hover/activity:scale-110 group-hover/activity:rotate-12",
-                        activity.type === "alert" && "bg-destructive/10 text-destructive",
-                        activity.type === "success" && "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-                        activity.type === "added" && "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-                        activity.type === "report" && "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
-                      )}
-                    >
-                      <activity.icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none group-hover/activity:text-primary transition-colors">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/activity:opacity-100 transition-opacity" />
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <action.icon className="h-6 w-6 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                    <span className="text-sm font-medium">{action.label}</span>
+                  </Button>
                 ))}
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Quick Actions with scale animation */}
-        <Card className="hover:shadow-xl transition-all duration-300 animate-slide-up" style={{ animationDelay: '600ms' }}>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks and operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {[
-                { icon: Plus, label: "Add Emission Data", color: "hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950 dark:hover:text-blue-300" },
-                { icon: Download, label: "Generate Report", color: "hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950 dark:hover:text-purple-300" },
-                { icon: Activity, label: "View Analytics", color: "hover:border-green-500 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950 dark:hover:text-green-300" },
-                { icon: TrendingUp, label: "Set Goals", color: "hover:border-orange-500 hover:bg-orange-50 hover:text-orange-700 dark:hover:bg-orange-950 dark:hover:text-orange-300" },
-              ].map((action, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className={cn(
-                    "h-28 flex flex-col items-center justify-center gap-3 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg",
-                    action.color
-                  )}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                  <action.icon className="h-6 w-6 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <style jsx global>{`
@@ -580,15 +558,6 @@ export default function DashboardPage() {
           }
           to {
             transform: scaleY(1);
-          }
-        }
-
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
           }
         }
 
@@ -635,10 +604,6 @@ export default function DashboardPage() {
         .animate-fade-in-right {
           animation: fade-in-right 0.5s ease-out;
           animation-fill-mode: both;
-        }
-
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
         }
 
         .animate-draw-line {

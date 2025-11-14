@@ -1,7 +1,13 @@
 "use client";
 
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function TeamPage() {
   return (
@@ -18,12 +24,13 @@ export default function TeamPage() {
           <CardHeader>
             <CardTitle>Coming Soon</CardTitle>
             <CardDescription>
-              Team management features will be available in Week 5
+              Team management features will be available in Week 6
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              This page will include user invitations, role management, and access control.
+              This page will include user invitations, role management, and
+              access control.
             </p>
           </CardContent>
         </Card>
@@ -31,4 +38,3 @@ export default function TeamPage() {
     </DashboardLayout>
   );
 }
-
