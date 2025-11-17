@@ -24,6 +24,7 @@ import {
   Download,
   ArrowUpRight,
   ArrowDownRight,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -145,6 +146,8 @@ export default function DashboardPage() {
   // const [chartHeight, setChartHeight] = useState(300);
   const [stats, setStats] = useState<EmissionsStats | null>(null);
   const [recentEmissions, setRecentEmissions] = useState<any[]>([]);
+  const [financedEmissions, setFinancedEmissions] = useState<any[]>([]);
+  const [financedEmissionsTotal, setFinancedEmissionsTotal] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState<"7" | "30" | "180">(
     "30"
   );
@@ -255,6 +258,24 @@ export default function DashboardPage() {
         const emissionsData = await emissionsResponse.json();
         setRecentEmissions(emissionsData.emissions);
       }
+
+      // Fetch financed emissions
+      const financedResponse = await fetch("/api/financed-emissions?limit=5", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (financedResponse.ok) {
+        const financedData = await financedResponse.json();
+        setFinancedEmissions(financedData.financedEmissions || []);
+        // Calculate total financed emissions
+        const total = (financedData.financedEmissions || []).reduce(
+          (sum: number, item: any) => sum + (item.totalEmissions || 0),
+          0
+        );
+        setFinancedEmissionsTotal(total);
+      }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
@@ -305,9 +326,12 @@ export default function DashboardPage() {
         {/* Key Metrics with staggered animation */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {(() => {
-            const totalFormatted = formatEmissionValue(
-              stats?.summary.totalCO2e || 0
-            );
+            // Add financed emissions to total (convert from tCO2e to kg)
+            const totalOperationsEmissions = stats?.summary.totalCO2e || 0;
+            const totalFinancedEmissions = financedEmissionsTotal * 1000; // Convert from tCO2e to kg
+            const grandTotal = totalOperationsEmissions + totalFinancedEmissions;
+
+            const totalFormatted = formatEmissionValue(grandTotal);
             const scope1Formatted = formatEmissionValue(
               stats?.summary.scope1 || 0
             );
@@ -318,7 +342,7 @@ export default function DashboardPage() {
               stats?.summary.scope3 || 0
             );
 
-            const total = stats?.summary.totalCO2e || 0;
+            const total = grandTotal;
             const scope1Progress =
               total > 0 ? (stats!.summary.scope1 / total) * 100 : 0;
             const scope2Progress =
@@ -380,6 +404,85 @@ export default function DashboardPage() {
             );
           })()}
         </div>
+
+        {/* Financed Emissions Section */}
+        {financedEmissionsTotal > 0 && (
+          <div className="animate-slide-up" style={{ animationDelay: "400ms" }}>
+            <Card className="hover:shadow-xl transition-all duration-300 border-2 border-primary/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      Financed Emissions (PCAF)
+                      <Badge variant="secondary">Portfolio</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Emissions from your investment and loan portfolios
+                    </CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-primary">
+                      {financedEmissionsTotal.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">tCO₂e</div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {financedEmissions.slice(0, 5).map((emission: any, index: number) => (
+                    <div
+                      key={emission.id}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-all duration-300 cursor-pointer group animate-fade-in-right"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="rounded-full p-2 bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                          <Building2 className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium truncate">
+                            {emission.investmentName}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground truncate">
+                              {emission.companyName}
+                            </span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <Badge variant="outline" className="text-xs">
+                              {emission.sector}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-primary">
+                          {emission.totalEmissions.toFixed(2)} tCO₂e
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {emission.currency} {emission.investmentAmount.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {financedEmissions.length > 5 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/dashboard/emissions")}
+                    >
+                      View All {financedEmissions.length} Records
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Recent Emissions and Quick Actions in one row */}
         <div className="grid gap-6 md:grid-cols-2">
@@ -489,7 +592,7 @@ export default function DashboardPage() {
                     icon: Activity,
                     label: "View Analytics",
                     color:
-                      "hover:border-green-500 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950 dark:hover:text-green-300",
+                      "hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-950 dark:hover:text-cyan-300",
                   },
                   {
                     icon: TrendingUp,

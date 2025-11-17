@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "./ThemeProvider";
-import { Leaf, Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, Home } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "./ui/sheet";
 import { Button } from "./ui/button";
@@ -36,7 +37,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary group">
-              <Leaf className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:rotate-12" strokeWidth={1.5} />
+              <Image src="/carbon.png" alt="CarbonScope Logo" width={28} height={28} className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:rotate-12 dark:invert" />
               <span className="hidden sm:inline">CarbonScope 360</span>
               <span className="sm:hidden">CS360</span>
             </Link>
@@ -45,25 +46,24 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link
-              href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
-              About
-            </Link>
-            <Link
-              href="/features"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Features
+              <Home className="w-4 h-4" />
+              Home
             </Link>
             <Link
               href="/login"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Login
+              Sign In
             </Link>
             <Link
-              href="/register"
+              href="/register?tab=signup"
               className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
               Get Started
@@ -85,28 +85,26 @@ export default function Header() {
                 <SheetTitle className="text-left">Navigation Menu</SheetTitle>
                 <nav className="flex flex-col gap-4 mt-8">
                   <Link
-                    href="/about"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+                    href="/"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2 flex items-center gap-2"
                   >
-                    About
-                  </Link>
-                  <Link
-                    href="/features"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                  >
-                    Features
+                    <Home className="w-5 h-5" />
+                    Home
                   </Link>
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
                   >
-                    Login
+                    Sign In
                   </Link>
                   <Link
-                    href="/register"
+                    href="/register?tab=signup"
                     onClick={() => setMobileMenuOpen(false)}
                     className="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors text-center font-medium"
                   >

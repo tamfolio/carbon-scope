@@ -18,10 +18,11 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  emissions      Emission[]
+
+  organizationId     String?
+  organization       Organization? @relation(fields: [organizationId], references: [id])
+  emissions          Emission[]
+  financedEmissions  FinancedEmission[]
 }
 
 model Organization {
@@ -30,9 +31,10 @@ model Organization {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  users     User[]
-  emissions Emission[]
+
+  users             User[]
+  emissions         Emission[]
+  financedEmissions FinancedEmission[]
 }
 
 model Emission {
@@ -53,6 +55,36 @@ model Emission {
   userId         String
   user           User     @relation(fields: [userId], references: [id])
   
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model FinancedEmission {
+  id                 String   @id @default(cuid())
+  investmentName     String
+  investmentType     String
+  investmentAmount   Float
+  currency           String
+  companyName        String
+  sector             String
+  country            String
+  attributionFactor  Float    // Percentage 0-100
+  scope1             Float
+  scope2             Float
+  scope3             Float
+  totalEmissions     Float
+  calculationMethod  String
+  dataQualityScore   Float    // PCAF score 1-5
+  reportingYear      String
+  reportingPeriod    String
+  dataSource         String
+  description        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
 }
