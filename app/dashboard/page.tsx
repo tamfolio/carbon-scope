@@ -140,6 +140,13 @@ function MetricCard({
   );
 }
 
+interface UserData {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -152,6 +159,7 @@ export default function DashboardPage() {
     "30"
   );
   const [periodType, setPeriodType] = useState<"day" | "week" | "month">("day");
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   // Helper function to format CO2e values
   const formatEmissionValue = (
@@ -229,6 +237,18 @@ export default function DashboardPage() {
 
   const loadDashboardData = async (token: string) => {
     try {
+      // Fetch user data
+      const userResponse = await fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUserData(userData.user);
+      }
+
       // Fetch emissions statistics with period
       const statsResponse = await fetch(
         `/api/emissions/stats?days=${selectedPeriod}&period=${periodType}`,
@@ -305,7 +325,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
           <div>
             <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-green-700 bg-clip-text text-transparent">
-              Welcome back!
+              Welcome back{userData?.name ? `, ${userData.name.split(' ')[0]}` : ''}!
             </h2>
             <p className="text-muted-foreground mt-1">
               Here's your carbon emissions overview for November 2025

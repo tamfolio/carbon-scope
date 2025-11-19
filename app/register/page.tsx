@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertCircle, CheckCircle2, Loader2, Building2, Mail, Lock, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Building2, Mail, Lock, User, ArrowLeft } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -79,6 +79,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 py-12">
       <div className="w-full max-w-2xl">
+        {/* Back to Home Button */}
+        <div className="mb-6">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+
         {/* Logo and Brand */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2 mb-2">
