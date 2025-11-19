@@ -241,7 +241,7 @@ export default function AddFinancedEmissionPage() {
           totalEmissions: formData.totalEmissions,
           calculationMethod: formData.calculationMethod,
           dataQualityScore: parseFloat(formData.dataQualityScore),
-          reportingYear: parseInt(formData.reportingYear),
+          reportingYear: formData.reportingYear,
           reportingPeriod: formData.reportingPeriod,
           dataSource: formData.dataSource,
           description: formData.description,

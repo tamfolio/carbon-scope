@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
         totalEmissions,
         calculationMethod: body.calculationMethod,
         dataQualityScore: body.dataQualityScore,
-        reportingYear: body.reportingYear,
+        reportingYear: String(body.reportingYear),
         reportingPeriod: body.reportingPeriod,
         dataSource: body.dataSource,
         description: body.description || null,
