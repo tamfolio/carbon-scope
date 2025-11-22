@@ -3,9 +3,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QuickCalculator from "@/components/QuickCalculator";
-import ChatAssistant from "@/components/ChatAssistant";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +24,12 @@ import {
   BarChart3,
   Globe,
   Lock,
+  Leaf,
+  Building2,
+  Factory,
+  Briefcase,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useState, useEffect } from "react";
@@ -33,6 +37,8 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<"testimonials" | "case-studies">("testimonials");
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -112,11 +118,108 @@ export default function Home() {
     "Compliance automation",
   ];
 
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "Chief Sustainability Officer",
+      company: "GreenTech Solutions",
+      industry: "Technology",
+      quote: "Carbon Scope transformed our sustainability reporting. We reduced our carbon footprint by 34% in just 18 months while maintaining full regulatory compliance across all markets.",
+      rating: 5,
+      icon: Building2,
+    },
+    {
+      name: "Marcus Johnson",
+      role: "Environmental Director",
+      company: "Atlantic Manufacturing",
+      industry: "Manufacturing",
+      quote: "The platform's PCAF compliance features helped us secure our largest sustainability-linked loan. The automated reporting saved our team 200+ hours monthly.",
+      rating: 5,
+      icon: Factory,
+    },
+    {
+      name: "Elena Rodriguez",
+      role: "ESG Manager",
+      company: "Global Finance Corp",
+      industry: "Financial Services",
+      quote: "Carbon Scope's portfolio carbon accounting capabilities gave us the insights we needed to align our investments with our net-zero commitments.",
+      rating: 5,
+      icon: Briefcase,
+    },
+    {
+      name: "David Park",
+      role: "Sustainability Lead",
+      company: "Urban Logistics Ltd",
+      industry: "Logistics",
+      quote: "The Scope 3 tracking features helped us identify emission hotspots in our supply chain. We've optimized our logistics and reduced transport emissions by 42%.",
+      rating: 5,
+      icon: Building2,
+    },
+    {
+      name: "Lisa Thompson",
+      role: "VP Operations",
+      company: "Renewable Energy Co",
+      industry: "Energy",
+      quote: "Carbon Scope's real-time monitoring helped us achieve carbon neutrality ahead of schedule. The platform's accuracy is unmatched in the industry.",
+      rating: 5,
+      icon: Zap,
+    },
+  ];
+
+  const caseStudies = [
+    {
+      company: "TechCorp International",
+      industry: "Technology",
+      icon: Building2,
+      challenge: "Complex multi-regional carbon accounting across 15 countries",
+      solution: "Automated Scope 1-3 tracking with real-time regional compliance monitoring",
+      results: [
+        { label: "31% reduction in total emissions", icon: TrendingUp },
+        { label: "90% time savings on reporting", icon: CheckCircle },
+        { label: "100% regulatory compliance", icon: Shield },
+        { label: "$1.8M in carbon credit revenue", icon: BarChart3 },
+      ],
+    },
+    {
+      company: "Global Manufacturing Group",
+      industry: "Manufacturing",
+      icon: Factory,
+      challenge: "Supply chain emission tracking across 2,000+ suppliers",
+      solution: "AI-powered Scope 3 analysis with supplier engagement platform",
+      results: [
+        { label: "45% supply chain visibility improvement", icon: TrendingUp },
+        { label: "23% Scope 3 emission reduction", icon: CheckCircle },
+        { label: "85% supplier participation rate", icon: Users },
+        { label: "$3.2M in cost savings", icon: BarChart3 },
+      ],
+    },
+    {
+      company: "Investment Partners LLC",
+      industry: "Financial Services",
+      icon: Briefcase,
+      challenge: "Portfolio carbon risk assessment for $5B investment portfolio",
+      solution: "Integrated financed emissions tracking with risk analytics",
+      results: [
+        { label: "100% portfolio emission visibility", icon: TrendingUp },
+        { label: "Climate risk scoring for all assets", icon: Shield },
+        { label: "TCFD-compliant reporting", icon: FileText },
+        { label: "15% improvement in ESG ratings", icon: BarChart3 },
+      ],
+    },
+  ];
+
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
   return (
     <>
       <Header />
       <QuickCalculator />
-      <ChatAssistant />
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
         <section
@@ -141,7 +244,7 @@ export default function Home() {
                 className="px-4 py-1.5 animate-fade-in"
                 style={{ animationDelay: "0.1s" }}
               >
-                <Image src="/carbon.png" alt="CarbonScope" width={12} height={12} className="mr-2 h-3 w-3 dark:invert" />
+                <Leaf className="mr-2 h-3 w-3 text-primary" />
                 Trusted by 10,000+ Organizations
               </Badge>
 
@@ -503,29 +606,11 @@ export default function Home() {
                 <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/10 via-green-500/5 to-primary/10 dark:from-primary/20 dark:via-green-500/10 dark:to-primary/20 border border-primary/20 flex items-center justify-center shadow-2xl overflow-hidden group">
                   {/* Animated background gradient */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                  {/* Large carbon icon */}
-                  <Image
-                    src="/carbon.png"
-                    alt="CarbonScope"
-                    width={256}
-                    height={256}
-                    className="h-64 w-64 opacity-40 dark:opacity-50 dark:invert transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 relative z-10"
-                  />
+                  {/* Large leaf icon */}
+                  <Leaf className="h-64 w-64 text-primary opacity-40 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 relative z-10" />
                   {/* Smaller decorative icons */}
-                  <Image
-                    src="/carbon.png"
-                    alt="CarbonScope"
-                    width={80}
-                    height={80}
-                    className="absolute top-8 right-8 h-20 w-20 opacity-20 dark:opacity-30 dark:invert transition-all duration-500 group-hover:translate-x-2 group-hover:-translate-y-2"
-                  />
-                  <Image
-                    src="/carbon.png"
-                    alt="CarbonScope"
-                    width={64}
-                    height={64}
-                    className="absolute bottom-12 left-12 h-16 w-16 opacity-15 dark:opacity-25 dark:invert transition-all duration-500 group-hover:-translate-x-2 group-hover:translate-y-2"
-                  />
+                  <Leaf className="absolute top-8 right-8 h-20 w-20 text-primary opacity-20 transition-all duration-500 group-hover:translate-x-2 group-hover:-translate-y-2" />
+                  <Leaf className="absolute bottom-12 left-12 h-16 w-16 text-primary opacity-15 transition-all duration-500 group-hover:-translate-x-2 group-hover:translate-y-2" />
                 </div>
               </div>
             </div>
@@ -550,92 +635,196 @@ export default function Home() {
             {/* Tabs */}
             <div className="flex justify-center gap-4 mb-12">
               <Button
-                variant="default"
+                variant={activeTab === "testimonials" ? "default" : "outline"}
                 className="px-8"
+                onClick={() => setActiveTab("testimonials")}
               >
                 Testimonials
               </Button>
               <Button
-                variant="outline"
+                variant={activeTab === "case-studies" ? "default" : "outline"}
                 className="px-8"
+                onClick={() => setActiveTab("case-studies")}
               >
                 Case Studies
               </Button>
             </div>
 
-            {/* Featured Testimonial */}
-            <Card className="max-w-4xl mx-auto mb-12 border-none shadow-lg">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className="text-yellow-500 text-xl">★</span>
-                      ))}
-                    </div>
-                    <p className="text-lg italic text-muted-foreground">
-                      "CarbonScope 360 transformed how we track and reduce our emissions. The platform is intuitive, powerful, and has helped us achieve a 23% reduction in just 12 months."
-                    </p>
-                    <div className="pt-4 border-t">
-                      <p className="font-semibold text-foreground">Sarah Johnson</p>
-                      <p className="text-sm text-muted-foreground">Head of Sustainability, TechCorp Global</p>
-                      <p className="text-xs text-muted-foreground mt-1">500-1000 employees · Technology</p>
-                    </div>
-                    <Card className="bg-primary/10 border-none mt-4">
-                      <CardContent className="p-4">
-                        <p className="font-semibold text-primary">Key Results:</p>
-                        <ul className="mt-2 space-y-1 text-sm">
-                          <li>• 23% emissions reduction in 12 months</li>
-                          <li>• 75% time saved on reporting</li>
-                          <li>• $150K annual cost savings</li>
-                        </ul>
-                      </CardContent>
-                    </Card>
+            {/* Testimonials Tab */}
+            {activeTab === "testimonials" && (
+              <div className="space-y-12">
+                {/* Featured Testimonial Carousel */}
+                <div className="relative max-w-5xl mx-auto">
+                  <Card className="border-2 border-primary/20 shadow-2xl bg-card/80 backdrop-blur-sm">
+                    <CardContent className="p-8 md:p-12">
+                      <div className="flex flex-col items-center text-center space-y-6">
+                        {/* Icon */}
+                        <div>
+                          {(() => {
+                            const IconComponent = testimonials[currentTestimonial].icon;
+                            return <IconComponent className="h-12 w-12 text-primary" />;
+                          })()}
+                        </div>
+
+                        {/* Rating */}
+                        <div className="flex gap-1">
+                          {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
+                            <span key={i} className="text-yellow-500 text-2xl">★</span>
+                          ))}
+                        </div>
+
+                        {/* Quote */}
+                        <p className="text-xl md:text-2xl italic text-foreground font-light leading-relaxed max-w-3xl">
+                          "{testimonials[currentTestimonial].quote}"
+                        </p>
+
+                        {/* Author Info */}
+                        <div className="pt-6 border-t border-border/40 w-full">
+                          <p className="font-bold text-lg text-foreground">{testimonials[currentTestimonial].name}</p>
+                          <p className="text-sm text-muted-foreground mt-1">{testimonials[currentTestimonial].role}</p>
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {testimonials[currentTestimonial].company}
+                            </Badge>
+                            <span className="text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground">{testimonials[currentTestimonial].industry}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Navigation Buttons */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-16 rounded-full h-12 w-12 shadow-lg border-2"
+                    onClick={prevTestimonial}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-16 rounded-full h-12 w-12 shadow-lg border-2"
+                    onClick={nextTestimonial}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+
+                  {/* Dots Indicator */}
+                  <div className="flex justify-center gap-2 mt-8">
+                    {testimonials.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentTestimonial(index)}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          index === currentTestimonial
+                            ? "w-8 bg-primary"
+                            : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                        }`}
+                      />
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Additional Testimonials Grid */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
-              <Card className="border-none shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500">★</span>
-                    ))}
-                  </div>
-                  <p className="text-sm italic mb-4">"Outstanding platform for comprehensive emissions tracking."</p>
-                  <p className="font-semibold text-sm">Michael Chen</p>
-                  <p className="text-xs text-muted-foreground">CFO, GreenBank</p>
-                </CardContent>
-              </Card>
-              <Card className="border-none shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500">★</span>
-                    ))}
-                  </div>
-                  <p className="text-sm italic mb-4">"Best-in-class support and incredibly accurate calculations."</p>
-                  <p className="font-semibold text-sm">Amara Okafor</p>
-                  <p className="text-xs text-muted-foreground">ESG Manager, AfricaEnergy</p>
-                </CardContent>
-              </Card>
-              <Card className="border-none shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-500">★</span>
-                    ))}
-                  </div>
-                  <p className="text-sm italic mb-4">"The PCAF compliance features are absolutely essential for us."</p>
-                  <p className="font-semibold text-sm">James Wright</p>
-                  <p className="text-xs text-muted-foreground">Director, FirstBank</p>
-                </CardContent>
-              </Card>
-            </div>
+                {/* Additional Testimonials Grid */}
+                <div className="grid md:grid-cols-3 gap-6">
+                  {testimonials.slice(0, 3).map((testimonial, index) => (
+                    <Card key={index} className="border-2 border-border/40 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-card/50 backdrop-blur-sm">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          {(() => {
+                            const IconComponent = testimonial.icon;
+                            return <IconComponent className="h-5 w-5 text-primary" />;
+                          })()}
+                          <Badge variant="outline" className="text-xs">
+                            {testimonial.industry}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-1 mb-3">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <span key={i} className="text-yellow-500 text-sm">★</span>
+                          ))}
+                        </div>
+                        <p className="text-sm italic mb-4 text-muted-foreground line-clamp-3">"{testimonial.quote}"</p>
+                        <div className="pt-3 border-t border-border/40">
+                          <p className="font-semibold text-sm text-foreground">{testimonial.name}</p>
+                          <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                          <p className="text-xs text-muted-foreground">{testimonial.company}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* Case Studies Tab */}
+            {activeTab === "case-studies" && (
+              <div className="space-y-8">
+                {caseStudies.map((study, index) => (
+                  <Card key={index} className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-xl hover:shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="grid md:grid-cols-2 gap-0">
+                        {/* Left Side - Challenge & Solution */}
+                        <div className="p-8 md:p-10 bg-gradient-to-br from-muted/50 to-muted/20 border-r border-border/40">
+                          <div className="flex items-center gap-3 mb-6">
+                            {(() => {
+                              const IconComponent = study.icon;
+                              return <IconComponent className="h-8 w-8 text-primary" />;
+                            })()}
+                            <div>
+                              <h3 className="text-2xl font-bold text-foreground">{study.company}</h3>
+                              <Badge variant="secondary" className="mt-1">{study.industry}</Badge>
+                            </div>
+                          </div>
+
+                          <div className="space-y-6">
+                            <div>
+                              <h4 className="text-sm font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider mb-2">Challenge</h4>
+                              <p className="text-base text-foreground leading-relaxed">{study.challenge}</p>
+                            </div>
+
+                            <div className="h-px bg-border/40" />
+
+                            <div>
+                              <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Solution</h4>
+                              <p className="text-base text-foreground leading-relaxed">{study.solution}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Side - Results */}
+                        <div className="p-8 md:p-10 bg-gradient-to-br from-primary/5 to-transparent">
+                          <h4 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6 text-primary" />
+                            Results Achieved
+                          </h4>
+                          <div className="space-y-4">
+                            {study.results.map((result, resultIndex) => {
+                              const ResultIcon = result.icon;
+                              const iconColors = [
+                                "text-blue-600 dark:text-blue-400",
+                                "text-green-600 dark:text-green-400",
+                                "text-purple-600 dark:text-purple-400",
+                                "text-orange-600 dark:text-orange-400"
+                              ];
+                              return (
+                                <div key={resultIndex} className="flex items-start gap-4 p-4 rounded-lg bg-card/50 border border-border/40 hover:border-primary/40 transition-all duration-300 hover:shadow-md">
+                                  <ResultIcon className={`h-5 w-5 flex-shrink-0 ${iconColors[resultIndex % iconColors.length]}`} />
+                                  <p className="text-sm font-medium text-foreground pt-0.5">{result.label}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

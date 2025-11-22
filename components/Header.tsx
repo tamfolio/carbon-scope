@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useTheme } from "./ThemeProvider";
-import { Moon, Sun, Menu, X, Home } from "lucide-react";
+import { Moon, Sun, Menu, X, Home, Leaf } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "./ui/sheet";
 import { Button } from "./ui/button";
@@ -37,7 +36,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary group">
-              <Image src="/carbon.png" alt="CarbonScope Logo" width={28} height={28} className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:rotate-12 dark:invert" />
+              <Leaf className="h-6 w-6 sm:h-7 sm:w-7 text-primary transition-transform group-hover:rotate-12" />
               <span className="hidden sm:inline">CarbonScope 360</span>
               <span className="sm:hidden">CS360</span>
             </Link>

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "./ThemeProvider";
-import Image from "next/image";
 import {
   LayoutDashboard,
   Database,
@@ -33,6 +32,7 @@ import {
   FolderKanban,
   BarChart3,
   Shield,
+  Leaf,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-border/40 px-6">
         <Link href="/dashboard" className="flex items-center space-x-2 group">
-          <Image src="/carbon.png" alt="CarbonScope Logo" width={32} height={32} className="w-8 h-8 transition-transform group-hover:rotate-12" />
+          <Leaf className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
           <span className="font-bold text-lg">CarbonScope</span>
         </Link>
       </div>
