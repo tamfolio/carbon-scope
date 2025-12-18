@@ -33,6 +33,8 @@ import {
   BarChart3,
   Shield,
   Leaf,
+  UserCog,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,35 +53,53 @@ interface UserData {
   } | null;
 }
 
-const navigationGroups = [
-  {
-    title: "Overview",
-    items: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Data Management",
-    items: [
-      { name: "Emissions Data", href: "/dashboard/emissions", icon: Database },
-      { name: "Data Tools", href: "/dashboard/data-management", icon: FolderKanban },
-    ],
-  },
-  {
-    title: "Analysis & Reporting",
-    items: [
-      { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-      { name: "Reports", href: "/dashboard/reports", icon: FileText },
-    ],
-  },
-  {
-    title: "Organization",
-    items: [
-      { name: "Team", href: "/dashboard/team", icon: Users },
-      { name: "Settings", href: "/dashboard/settings", icon: Settings },
-    ],
-  },
-];
+const getNavigationGroups = (userRole?: string) => {
+  const baseGroups = [
+    {
+      title: "Overview",
+      items: [
+        { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: "Data Management",
+      items: [
+        { name: "Emissions Data", href: "/dashboard/emissions", icon: Database },
+        { name: "Data Tools", href: "/dashboard/data-management", icon: FolderKanban },
+      ],
+    },
+    {
+      title: "Analysis & Reporting",
+      items: [
+        { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+        { name: "Reports", href: "/dashboard/reports", icon: FileText },
+      ],
+    },
+    {
+      title: "Organization",
+      items: [
+        { name: "Team", href: "/dashboard/team", icon: Users },
+        { name: "Settings", href: "/dashboard/settings", icon: Settings },
+      ],
+    },
+  ];
+
+  // Add Administration section for ADMIN and SUPER_ADMIN users
+  if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+    baseGroups.push({
+      title: "Administration",
+      items: [
+        { name: "Admin Dashboard", href: "/dashboard/admin", icon: Shield },
+        { name: "User Management", href: "/dashboard/admin/users", icon: UserCog },
+        { name: "Admin Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+        { name: "Admin Reports", href: "/dashboard/admin/reports", icon: FileText },
+        { name: "Activity Logs", href: "/dashboard/admin/activity", icon: Activity },
+      ],
+    });
+  }
+
+  return baseGroups;
+};
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
@@ -145,80 +165,84 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return email.slice(0, 2).toUpperCase();
   };
 
-  const Sidebar = () => (
-    <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b border-border/40 px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2 group">
-          <Leaf className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
-          <span className="font-bold text-lg">CarbonScope</span>
-        </Link>
-      </div>
+  const Sidebar = () => {
+    const navigationGroups = getNavigationGroups(userData?.role);
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-6 px-3 py-4 overflow-y-auto">
-        {navigationGroups.map((group, groupIndex) => (
-          <div key={groupIndex} className="space-y-1">
-            <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              {group.title}
-            </h3>
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                // Exact match for dashboard, startsWith for sub-routes
-                const isActive = item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.name}</span>
-                    {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
+    return (
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className="flex h-16 items-center border-b border-border/40 px-6">
+          <Link href="/dashboard" className="flex items-center space-x-2 group">
+            <Leaf className="h-8 w-8 text-primary transition-transform group-hover:rotate-12" />
+            <span className="font-bold text-lg">CarbonScope</span>
+          </Link>
+        </div>
 
-      {/* User Section */}
-      <div className="border-t border-border/40 p-4">
-        {loading ? (
-          <div className="flex items-center space-x-3 rounded-lg bg-accent/50 p-3">
-            <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="h-4 bg-muted rounded animate-pulse" />
-              <div className="h-3 bg-muted rounded w-3/4 animate-pulse" />
+        {/* Navigation */}
+        <nav className="flex-1 space-y-6 px-3 py-4 overflow-y-auto">
+          {navigationGroups.map((group, groupIndex) => (
+            <div key={groupIndex} className="space-y-1">
+              <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                {group.title}
+              </h3>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  // Exact match for dashboard and exact match for other paths to avoid sub-route conflicts
+                  // E.g., /dashboard/admin should not match when on /dashboard/admin/users
+                  const isActive = pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                      {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ) : userData ? (
-          <div className="flex items-center space-x-3 rounded-lg bg-accent/50 p-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {getInitials(userData.name, userData.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {userData.name || userData.email.split("@")[0]}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">{userData.email}</p>
+          ))}
+        </nav>
+
+        {/* User Section */}
+        <div className="border-t border-border/40 p-4">
+          {loading ? (
+            <div className="flex items-center space-x-3 rounded-lg bg-accent/50 p-3">
+              <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="h-4 bg-muted rounded animate-pulse" />
+                <div className="h-3 bg-muted rounded w-3/4 animate-pulse" />
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : userData ? (
+            <div className="flex items-center space-x-3 rounded-lg bg-accent/50 p-3">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {getInitials(userData.name, userData.email)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {userData.name || userData.email.split("@")[0]}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{userData.email}</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="h-screen flex overflow-hidden bg-background">
@@ -245,7 +269,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Sheet>
 
             <h1 className="text-lg font-semibold hidden sm:block">
-              {navigationGroups.flatMap(group => group.items).find((item) => pathname === item.href || pathname.startsWith(item.href + "/"))?.name || "Dashboard"}
+              {getNavigationGroups(userData?.role).flatMap(group => group.items).find((item) => pathname === item.href || pathname.startsWith(item.href + "/"))?.name || "Dashboard"}
             </h1>
           </div>
 

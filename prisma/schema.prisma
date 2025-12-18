@@ -16,6 +16,9 @@ model User {
   name      String?
   password  String
   role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  lastLoginAt DateTime?
+  invitedBy String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -23,6 +26,7 @@ model User {
   organization       Organization? @relation(fields: [organizationId], references: [id])
   emissions          Emission[]
   financedEmissions  FinancedEmission[]
+  activityLogs       ActivityLog[]
 }
 
 model Organization {
@@ -35,6 +39,7 @@ model Organization {
   users             User[]
   emissions         Emission[]
   financedEmissions FinancedEmission[]
+  activityLogs      ActivityLog[]
 }
 
 model Emission {
@@ -87,6 +92,22 @@ model FinancedEmission {
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  action         String   // e.g., "USER_INVITED", "ROLE_CHANGED", "USER_DEACTIVATED"
+  entityType     String   // e.g., "User", "Emission", "Organization"
+  entityId       String?
+  description    String
+  metadata       String?  // JSON string for additional data
+  createdAt      DateTime @default(now())
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 }
 
 enum Role {

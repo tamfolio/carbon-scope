@@ -47,3 +47,20 @@ export interface EmissionInput {
   organizationId?: string;
 }
 
+export interface ActivityLog {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  description: string;
+  metadata?: string | null;
+  createdAt: Date;
+  userId: string;
+  organizationId: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
+
