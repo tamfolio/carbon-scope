@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity, Shield } from "lucide-react";
 
 interface ActivityLog {
   id: string;
@@ -56,6 +56,7 @@ export default function ActivityLogsPage() {
   const [selectedUser, setSelectedUser] = useState("all");
   const [selectedAction, setSelectedAction] = useState("all");
   const [page, setPage] = useState(1);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -66,6 +67,16 @@ export default function ActivityLogsPage() {
   });
 
   useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
     fetchActivityLogs();
   }, [page, selectedUser, selectedAction]);
 
@@ -143,7 +154,9 @@ export default function ActivityLogsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Activity Logs</h1>
         <p className="text-gray-600 mt-2">
-          Organization activity audit trail
+          {isSuperAdmin
+            ? "System-wide activity audit trail"
+            : "Organization activity audit trail"}
         </p>
       </div>
 

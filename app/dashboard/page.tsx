@@ -161,25 +161,6 @@ export default function DashboardPage() {
   const [periodType, setPeriodType] = useState<"day" | "week" | "month">("day");
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  // Helper function to format CO2e values
-  const formatEmissionValue = (
-    kgCO2e: number
-  ): { value: string; unit: string } => {
-    if (kgCO2e >= 1000) {
-      // Show in tonnes for values >= 1000 kg
-      return {
-        value: (kgCO2e / 1000).toFixed(2),
-        unit: "tCO₂e",
-      };
-    } else {
-      // Show in kg for values < 1000 kg
-      return {
-        value: kgCO2e.toFixed(2),
-        unit: "kg CO₂e",
-      };
-    }
-  };
-
   useEffect(() => {
     const token = localStorage.getItem("cs_token");
     if (!token) {
@@ -247,6 +228,12 @@ export default function DashboardPage() {
       if (userResponse.ok) {
         const userData = await userResponse.json();
         setUserData(userData.user);
+
+        // Redirect super admins to their dashboard
+        if (userData.user.role === "SUPER_ADMIN") {
+          router.push("/dashboard/super-admin");
+          return;
+        }
       }
 
       // Fetch emissions statistics with period
@@ -346,21 +333,16 @@ export default function DashboardPage() {
         {/* Key Metrics with staggered animation */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {(() => {
-            // Add financed emissions to total (convert from tCO2e to kg)
+            // Add financed emissions to total (both already in kg CO₂e)
             const totalOperationsEmissions = stats?.summary.totalCO2e || 0;
-            const totalFinancedEmissions = financedEmissionsTotal * 1000; // Convert from tCO2e to kg
+            const totalFinancedEmissions = financedEmissionsTotal; // Already in kg CO₂e
             const grandTotal = totalOperationsEmissions + totalFinancedEmissions;
 
-            const totalFormatted = formatEmissionValue(grandTotal);
-            const scope1Formatted = formatEmissionValue(
-              stats?.summary.scope1 || 0
-            );
-            const scope2Formatted = formatEmissionValue(
-              stats?.summary.scope2 || 0
-            );
-            const scope3Formatted = formatEmissionValue(
-              stats?.summary.scope3 || 0
-            );
+            // Format values in kg CO₂e
+            const totalValue = grandTotal.toFixed(2);
+            const scope1Value = (stats?.summary.scope1 || 0).toFixed(2);
+            const scope2Value = (stats?.summary.scope2 || 0).toFixed(2);
+            const scope3Value = (stats?.summary.scope3 || 0).toFixed(2);
 
             const total = grandTotal;
             const scope1Progress =
@@ -378,8 +360,8 @@ export default function DashboardPage() {
               <>
                 <MetricCard
                   title="Total Emissions"
-                  value={totalFormatted.value}
-                  unit={totalFormatted.unit}
+                  value={totalValue}
+                  unit="kg CO₂e"
                   change={8.2}
                   icon={Cloud}
                   color="border-primary"
@@ -389,8 +371,8 @@ export default function DashboardPage() {
                 />
                 <MetricCard
                   title="Scope 1"
-                  value={scope1Formatted.value}
-                  unit={scope1Formatted.unit}
+                  value={scope1Value}
+                  unit="kg CO₂e"
                   change={3.1}
                   icon={Factory}
                   color="border-blue-500"
@@ -400,8 +382,8 @@ export default function DashboardPage() {
                 />
                 <MetricCard
                   title="Scope 2"
-                  value={scope2Formatted.value}
-                  unit={scope2Formatted.unit}
+                  value={scope2Value}
+                  unit="kg CO₂e"
                   change={-2.4}
                   icon={Zap}
                   color="border-yellow-500"
@@ -411,8 +393,8 @@ export default function DashboardPage() {
                 />
                 <MetricCard
                   title="Scope 3"
-                  value={scope3Formatted.value}
-                  unit={scope3Formatted.unit}
+                  value={scope3Value}
+                  unit="kg CO₂e"
                   change={5.7}
                   icon={Truck}
                   color="border-purple-500"
@@ -445,7 +427,7 @@ export default function DashboardPage() {
                     <div className="text-3xl font-bold text-primary">
                       {financedEmissionsTotal.toFixed(2)}
                     </div>
-                    <div className="text-sm text-muted-foreground">tCO₂e</div>
+                    <div className="text-sm text-muted-foreground">kg CO₂e</div>
                   </div>
                 </div>
               </CardHeader>
@@ -478,7 +460,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-primary">
-                          {emission.totalEmissions.toFixed(2)} tCO₂e
+                          {emission.totalEmissions.toFixed(2)} kg CO₂e
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {emission.currency} {emission.investmentAmount.toLocaleString()}
@@ -562,7 +544,7 @@ export default function DashboardPage() {
                                 {emission.scope}
                               </Badge>
                               <span className="text-xs text-muted-foreground">
-                                {(emission.co2e / 1000).toFixed(2)} t CO₂e
+                                {emission.co2e.toFixed(2)} kg CO₂e
                               </span>
                             </div>
                             <p className="text-xs text-muted-foreground">

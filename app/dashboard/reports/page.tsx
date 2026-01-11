@@ -210,19 +210,11 @@ const trendChartConfig = {
 const formatEmissionValue = (
   kgCO2e: number
 ): { value: string; unit: string } => {
-  if (kgCO2e >= 1000) {
-    // Show in tonnes for values >= 1000 kg
-    return {
-      value: (kgCO2e / 1000).toFixed(2),
-      unit: "tCO₂e",
-    };
-  } else {
-    // Show in kg for values < 1000 kg
-    return {
-      value: kgCO2e.toFixed(2),
-      unit: "kg CO₂e",
-    };
-  }
+  // Always show in kg CO₂e
+  return {
+    value: kgCO2e.toFixed(2),
+    unit: "kg CO₂e",
+  };
 };
 
 export default function ReportsPage() {
@@ -541,7 +533,7 @@ export default function ReportsPage() {
                             {reportData.summary.totalFinancedEmissionsTonnes.toFixed(
                               2
                             )}{" "}
-                            tCO₂e
+                            kg CO₂e
                           </div>
                         </div>
                       </>
@@ -799,7 +791,7 @@ export default function ReportsPage() {
                   <CardHeader>
                     <CardTitle>Financed Emissions Summary</CardTitle>
                     <CardDescription>
-                      PCAF-based portfolio emissions (in tonnes)
+                      PCAF-based portfolio emissions (in kg)
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -813,7 +805,7 @@ export default function ReportsPage() {
                             2
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">tCO₂e</p>
+                        <p className="text-xs text-muted-foreground">kg CO₂e</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
@@ -824,7 +816,7 @@ export default function ReportsPage() {
                             2
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">tCO₂e</p>
+                        <p className="text-xs text-muted-foreground">kg CO₂e</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
@@ -835,7 +827,7 @@ export default function ReportsPage() {
                             2
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">tCO₂e</p>
+                        <p className="text-xs text-muted-foreground">kg CO₂e</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
@@ -846,7 +838,7 @@ export default function ReportsPage() {
                             2
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">tCO₂e</p>
+                        <p className="text-xs text-muted-foreground">kg CO₂e</p>
                       </div>
                     </div>
                   </CardContent>
@@ -864,7 +856,7 @@ export default function ReportsPage() {
                         <TableRow>
                           <TableHead>Sector</TableHead>
                           <TableHead className="text-right">
-                            Total CO2e (tonnes)
+                            Total CO2e (kg)
                           </TableHead>
                           <TableHead className="text-right">
                             Investment
@@ -880,7 +872,7 @@ export default function ReportsPage() {
                                 {item.sector}
                               </TableCell>
                               <TableCell className="text-right">
-                                {item.total.toFixed(2)} tCO₂e
+                                {item.total.toFixed(2)} kg CO₂e
                               </TableCell>
                               <TableCell className="text-right">
                                 ${item.investmentAmount.toFixed(2)}

@@ -103,9 +103,9 @@ export async function GET(request: Request) {
       startY: yPosition,
       head: [["Metric", "Value", "Unit"]],
       body: [
-        ["Grand Total (Combined)", (reportData.summary?.grandTotalTonnes || 0).toFixed(2), "tCO2e"],
+        ["Grand Total (Combined)", (reportData.summary?.grandTotalTonnes || 0).toFixed(2), "kg CO₂e"],
         ["Operations Emissions", (reportData.summary?.totalCO2e || 0).toFixed(2), "kg CO2e"],
-        ["Financed Emissions", (reportData.summary?.totalFinancedEmissionsTonnes || 0).toFixed(2), "tCO2e"],
+        ["Financed Emissions", (reportData.summary?.totalFinancedEmissionsTonnes || 0).toFixed(2), "kg CO₂e"],
       ],
       theme: "grid",
       headStyles: { fillColor: [37, 99, 235] },
@@ -252,17 +252,17 @@ export async function GET(request: Request) {
       checkNewPage(60);
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text("Financed Emissions Summary (in tonnes)", 20, yPosition);
+      doc.text("Financed Emissions Summary (in kg)", 20, yPosition);
       yPosition += 10;
 
       autoTable(doc, {
         startY: yPosition,
         head: [["Metric", "Value", "Unit"]],
         body: [
-          ["Total Financed Emissions", (reportData.financedEmissions.summary.total || 0).toFixed(2), "tCO2e"],
-          ["Scope 1", (reportData.financedEmissions.summary.scope1 || 0).toFixed(2), "tCO2e"],
-          ["Scope 2", (reportData.financedEmissions.summary.scope2 || 0).toFixed(2), "tCO2e"],
-          ["Scope 3", (reportData.financedEmissions.summary.scope3 || 0).toFixed(2), "tCO2e"],
+          ["Total Financed Emissions", (reportData.financedEmissions.summary.total || 0).toFixed(2), "kg CO₂e"],
+          ["Scope 1", (reportData.financedEmissions.summary.scope1 || 0).toFixed(2), "kg CO₂e"],
+          ["Scope 2", (reportData.financedEmissions.summary.scope2 || 0).toFixed(2), "kg CO₂e"],
+          ["Scope 3", (reportData.financedEmissions.summary.scope3 || 0).toFixed(2), "kg CO₂e"],
           ["Total Investments", reportData.financedEmissions.summary.count || 0, "entries"],
         ],
         theme: "grid",
@@ -280,7 +280,7 @@ export async function GET(request: Request) {
 
         autoTable(doc, {
           startY: yPosition,
-          head: [["Sector", "Total CO2e (tonnes)", "Investment Amount", "Count"]],
+          head: [["Sector", "Total CO2e (kg)", "Investment Amount", "Count"]],
           body: (reportData.financedEmissions.bySector || [])
             .slice(0, 10)
             .map((item: any) => [

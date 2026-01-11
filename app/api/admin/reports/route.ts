@@ -10,7 +10,9 @@ export async function GET(request: Request) {
     }
 
     const { user } = authResult;
-    const organizationId = user.organizationId!;
+    const isSuperAdmin = user.role === "SUPER_ADMIN";
+    const organizationId = user.organizationId || "";
+    const orgFilter = isSuperAdmin ? {} : { organizationId };
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
         reportName = "Emissions Summary Report";
         const emissions = await prisma.emission.findMany({
           where: {
-            organizationId,
+            ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}),
           },
           include: {
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
       case "users":
         reportName = "User Activity Report";
         const users = await prisma.user.findMany({
-          where: { organizationId },
+          where: orgFilter,
           select: {
             id: true,
             name: true,
@@ -119,24 +121,27 @@ export async function GET(request: Request) {
 
       case "compliance":
         reportName = "Compliance Report";
-        const organization = await prisma.organization.findUnique({
-          where: { id: organizationId },
-          include: {
-            users: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                isActive: true,
+        // For super admin, we'll get all organizations, for regular admin just their org
+        const organization = isSuperAdmin
+          ? null
+          : await prisma.organization.findUnique({
+              where: { id: organizationId },
+              include: {
+                users: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    isActive: true,
+                  },
+                },
               },
-            },
-          },
-        });
+            });
 
         const allEmissions = await prisma.emission.findMany({
           where: {
-            organizationId,
+            ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}),
           },
         });
@@ -176,7 +181,7 @@ export async function GET(request: Request) {
         reportName = "Audit Trail Report";
         const activityLogs = await prisma.activityLog.findMany({
           where: {
-            organizationId,
+            ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
           },
           include: {
@@ -205,7 +210,7 @@ export async function GET(request: Request) {
     // Log activity
     await createActivityLog({
       userId: user.id,
-      organizationId,
+      organizationId: isSuperAdmin ? user.organizationId : organizationId,
       action: "REPORT_GENERATED",
       entityType: "Report",
       description: `Generated ${reportName} in ${format.toUpperCase()} format`,
@@ -264,7 +269,13 @@ export async function GET(request: Request) {
           break;
 
         case "compliance":
-          csv = `Compliance Report\nOrganization: ${reportData.organization.name}\nPeriod: ${reportData.period.start} to ${reportData.period.end}\n\n`;
+          csv = `Compliance Report\n`;
+          if (reportData.organization) {
+            csv += `Organization: ${reportData.organization.name}\n`;
+          } else {
+            csv += `Organization: All Organizations (Super Admin View)\n`;
+          }
+          csv += `Period: ${reportData.period.start} to ${reportData.period.end}\n\n`;
           csv += `Total Emissions: ${reportData.emissions.total} kg CO2e\n`;
           csv += `Scope 1: ${reportData.emissions.byScope.scope1} kg CO2e\n`;
           csv += `Scope 2: ${reportData.emissions.byScope.scope2} kg CO2e\n`;

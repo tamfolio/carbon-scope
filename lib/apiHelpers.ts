@@ -93,9 +93,37 @@ export async function requireAdmin(
     );
   }
 
-  if (!authResult.user.organizationId) {
+  // Super admins don't need to belong to an organization
+  if (authResult.user.role === "ADMIN" && !authResult.user.organizationId) {
     return NextResponse.json(
-      { error: "Forbidden - User must belong to an organization" },
+      { error: "Forbidden - Admin must belong to an organization" },
+      { status: 403 }
+    );
+  }
+
+  return { user: authResult.user };
+}
+
+/**
+ * Requires that the user is authenticated and has SUPER_ADMIN role
+ * @param request The incoming request
+ * @returns The authenticated super admin user, or an error response
+ */
+export async function requireSuperAdmin(
+  request: Request
+): Promise<{ user: AuthenticatedUser } | NextResponse> {
+  const authResult = await authenticateRequest(request);
+
+  if (!authResult) {
+    return NextResponse.json(
+      { error: "Unauthorized - Invalid or missing token" },
+      { status: 401 }
+    );
+  }
+
+  if (authResult.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json(
+      { error: "Forbidden - Super Admin access required" },
       { status: 403 }
     );
   }
@@ -145,7 +173,7 @@ export async function requireOrganization(
  */
 export async function createActivityLog(params: {
   userId: string;
-  organizationId: string;
+  organizationId: string | null;
   action: string;
   entityType: string;
   entityId?: string;

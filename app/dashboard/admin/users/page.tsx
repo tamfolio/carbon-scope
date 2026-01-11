@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Edit2, Power, PowerOff } from "lucide-react";
+import { Search, UserPlus, Edit2, Power, PowerOff, Shield } from "lucide-react";
 
 interface User {
   id: string;
@@ -41,6 +41,11 @@ interface User {
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;
+  organizationId: string | null;
+  organization?: {
+    id: string;
+    name: string;
+  } | null;
   _count: {
     emissions: number;
     financedEmissions: number;
@@ -56,6 +61,7 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({
@@ -76,6 +82,16 @@ export default function UsersManagement() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
     fetchUsers();
   }, []);
 
@@ -274,7 +290,9 @@ export default function UsersManagement() {
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-gray-600 mt-2">
-            Manage organization users and permissions
+            {isSuperAdmin
+              ? "Manage users across all organizations"
+              : "Manage organization users and permissions"}
           </p>
         </div>
         <Button onClick={() => setInviteDialogOpen(true)}>
@@ -305,6 +323,7 @@ export default function UsersManagement() {
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="USER">User</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
+                {isSuperAdmin && <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -331,6 +350,7 @@ export default function UsersManagement() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                {isSuperAdmin && <TableHead>Organization</TableHead>}
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Login</TableHead>
@@ -345,8 +365,24 @@ export default function UsersManagement() {
                     {user.name || "—"}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
+                  {isSuperAdmin && (
+                    <TableCell className="text-sm">
+                      {user.organization?.name || (
+                        <span className="text-muted-foreground italic">No organization</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
-                    <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        user.role === "SUPER_ADMIN"
+                          ? "default"
+                          : user.role === "ADMIN"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className={user.role === "SUPER_ADMIN" ? "bg-purple-600" : ""}
+                    >
                       {user.role}
                     </Badge>
                   </TableCell>
@@ -448,6 +484,7 @@ export default function UsersManagement() {
                     <SelectContent>
                       <SelectItem value="USER">User</SelectItem>
                       <SelectItem value="ADMIN">Admin</SelectItem>
+                      {isSuperAdmin && <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
@@ -550,6 +587,7 @@ export default function UsersManagement() {
                   <SelectContent>
                     <SelectItem value="USER">User</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
+                    {isSuperAdmin && <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>

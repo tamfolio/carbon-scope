@@ -494,7 +494,7 @@ export default function AddFinancedEmissionPage() {
                 Company Emissions Data
               </CardTitle>
               <CardDescription>
-                Greenhouse gas emissions for the portfolio company (in tCO₂e)
+                Greenhouse gas emissions for the portfolio company (in kg CO₂e)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -555,7 +555,7 @@ export default function AddFinancedEmissionPage() {
                     <div>
                       <p className="text-sm font-medium">Total Company Emissions</p>
                       <p className="text-2xl font-bold text-primary">
-                        {formData.totalEmissions.toFixed(2)} tCO₂e
+                        {formData.totalEmissions.toFixed(2)} kg CO₂e
                       </p>
                     </div>
                   </div>

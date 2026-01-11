@@ -56,6 +56,16 @@ export async function isAdmin(userId: string): Promise<boolean> {
 }
 
 /**
+ * Checks if a user has super admin privileges
+ * @param userId The user ID
+ * @returns True if user is a super admin
+ */
+export async function isSuperAdmin(userId: string): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return role === "SUPER_ADMIN";
+}
+
+/**
  * Checks if a user belongs to a specific organization
  * @param userId The user ID
  * @param organizationId The organization ID

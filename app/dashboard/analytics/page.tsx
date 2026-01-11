@@ -173,6 +173,8 @@ export default function AnalyticsPage() {
   const [comparisonData, setComparisonData] = useState<any>(null);
   const [drillDownCategory, setDrillDownCategory] = useState<string | null>(null);
   const [drillDownSource, setDrillDownSource] = useState<string | null>(null);
+  const [drillDownData, setDrillDownData] = useState<{ monthlyData: Array<{ month: string; total: number }> } | null>(null);
+  const [loadingDrillDown, setLoadingDrillDown] = useState(false);
 
   // Determine period type based on selected period
   useEffect(() => {
@@ -225,6 +227,33 @@ export default function AnalyticsPage() {
       console.error("Error loading analytics data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDrillDownData = async (category?: string, source?: string) => {
+    setLoadingDrillDown(true);
+    try {
+      const token = localStorage.getItem("cs_token");
+      if (!token) return;
+
+      const params = new URLSearchParams();
+      if (category) params.append("category", category);
+      if (source) params.append("source", source);
+
+      const response = await fetch(`/api/emissions/category-breakdown?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch drill-down data");
+
+      const data = await response.json();
+      setDrillDownData(data);
+    } catch (error) {
+      console.error("Failed to load drill-down data:", error);
+    } finally {
+      setLoadingDrillDown(false);
     }
   };
 
@@ -478,9 +507,9 @@ export default function AnalyticsPage() {
 
                         return {
                           period: label,
-                          scope1: item.scope1 / 1000, // Convert to tonnes
-                          scope2: item.scope2 / 1000,
-                          scope3: item.scope3 / 1000,
+                          scope1: item.scope1, // Already in kg CO₂e
+                          scope2: item.scope2,
+                          scope3: item.scope3,
                         };
                       });
 
@@ -531,7 +560,7 @@ export default function AnalyticsPage() {
                                       typeof value === "number"
                                         ? value.toFixed(2)
                                         : value
-                                    } t CO₂e`,
+                                    } kg CO₂e`,
                                     chartConfig[
                                       name as keyof typeof chartConfig
                                     ]?.label || name,
@@ -603,9 +632,9 @@ export default function AnalyticsPage() {
                         return {
                           period: label,
                           date: item.period,
-                          scope1: item.scope1 / 1000,
-                          scope2: item.scope2 / 1000,
-                          scope3: item.scope3 / 1000,
+                          scope1: item.scope1, // Already in kg CO₂e
+                          scope2: item.scope2,
+                          scope3: item.scope3,
                         };
                       });
 
@@ -655,7 +684,7 @@ export default function AnalyticsPage() {
                                       typeof value === "number"
                                         ? value.toFixed(2)
                                         : value
-                                    } t CO₂e`,
+                                    } kg CO₂e`,
                                     chartConfig[
                                       name as keyof typeof chartConfig
                                     ]?.label || name,
@@ -713,9 +742,9 @@ export default function AnalyticsPage() {
                     {(() => {
                       const chartData = stats.timeSeries.map((item) => ({
                         date: item.period,
-                        scope1: item.scope1 / 1000, // Convert to tonnes
-                        scope2: item.scope2 / 1000,
-                        scope3: item.scope3 / 1000,
+                        scope1: item.scope1, // Already in kg CO₂e
+                        scope2: item.scope2,
+                        scope3: item.scope3,
                       }));
 
                       const chartConfig = {
@@ -850,7 +879,7 @@ export default function AnalyticsPage() {
                                       typeof value === "number"
                                         ? value.toFixed(2)
                                         : value
-                                    } t CO₂e`,
+                                    } kg CO₂e`,
                                     chartConfig[
                                       name as keyof typeof chartConfig
                                     ]?.label || name,
@@ -906,40 +935,22 @@ export default function AnalyticsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {(() => {
             const total = stats?.summary.totalCO2e || 0;
-            const totalFormatted =
-              total >= 1000
-                ? { value: (total / 1000).toFixed(2), unit: "tCO₂e" }
-                : { value: total.toFixed(2), unit: "kg CO₂e" };
-            const scope1Formatted =
-              (stats?.summary.scope1 || 0) >= 1000
-                ? {
-                    value: ((stats?.summary.scope1 || 0) / 1000).toFixed(2),
-                    unit: "tCO₂e",
-                  }
-                : {
-                    value: (stats?.summary.scope1 || 0).toFixed(2),
-                    unit: "kg CO₂e",
-                  };
-            const scope2Formatted =
-              (stats?.summary.scope2 || 0) >= 1000
-                ? {
-                    value: ((stats?.summary.scope2 || 0) / 1000).toFixed(2),
-                    unit: "tCO₂e",
-                  }
-                : {
-                    value: (stats?.summary.scope2 || 0).toFixed(2),
-                    unit: "kg CO₂e",
-                  };
-            const scope3Formatted =
-              (stats?.summary.scope3 || 0) >= 1000
-                ? {
-                    value: ((stats?.summary.scope3 || 0) / 1000).toFixed(2),
-                    unit: "tCO₂e",
-                  }
-                : {
-                    value: (stats?.summary.scope3 || 0).toFixed(2),
-                    unit: "kg CO₂e",
-                  };
+            const totalFormatted = {
+              value: total.toFixed(2),
+              unit: "kg CO₂e"
+            };
+            const scope1Formatted = {
+              value: (stats?.summary.scope1 || 0).toFixed(2),
+              unit: "kg CO₂e"
+            };
+            const scope2Formatted = {
+              value: (stats?.summary.scope2 || 0).toFixed(2),
+              unit: "kg CO₂e"
+            };
+            const scope3Formatted = {
+              value: (stats?.summary.scope3 || 0).toFixed(2),
+              unit: "kg CO₂e"
+            };
 
             const scope1Progress =
               total > 0 ? ((stats?.summary.scope1 || 0) / total) * 100 : 0;
@@ -1018,17 +1029,17 @@ export default function AnalyticsPage() {
                     const chartData = [
                       {
                         scope: "scope1",
-                        emissions: stats.summary.scope1 / 1000,
+                        emissions: stats.summary.scope1, // Already in kg CO₂e
                         fill: "var(--color-scope1)",
                       },
                       {
                         scope: "scope2",
-                        emissions: stats.summary.scope2 / 1000,
+                        emissions: stats.summary.scope2, // Already in kg CO₂e
                         fill: "var(--color-scope2)",
                       },
                       {
                         scope: "scope3",
-                        emissions: stats.summary.scope3 / 1000,
+                        emissions: stats.summary.scope3, // Already in kg CO₂e
                         fill: "var(--color-scope3)",
                       },
                     ];
@@ -1062,7 +1073,7 @@ export default function AnalyticsPage() {
                               <ChartTooltipContent
                                 hideLabel
                                 formatter={(value, name) => [
-                                  `${typeof value === "number" ? value.toFixed(2) : value} t CO₂e`,
+                                  `${typeof value === "number" ? value.toFixed(2) : value} kg CO₂e`,
                                   chartConfig[name as keyof typeof chartConfig]?.label || name,
                                 ]}
                               />
@@ -1110,9 +1121,9 @@ export default function AnalyticsPage() {
                   </div>
                   <p className="text-2xl font-bold text-blue-600">
                     {stats?.summary.count && stats?.summary.count > 0
-                      ? ((stats?.summary.totalCO2e || 0) / stats.summary.count / 1000).toFixed(2)
+                      ? ((stats?.summary.totalCO2e || 0) / stats.summary.count).toFixed(2)
                       : "0.00"}
-                    <span className="text-sm ml-1">t</span>
+                    <span className="text-sm ml-1">kg</span>
                   </p>
                 </div>
 
@@ -1127,9 +1138,9 @@ export default function AnalyticsPage() {
                   </div>
                   <p className="text-2xl font-bold text-green-600">
                     {stats?.summary.totalCO2e
-                      ? ((stats.summary.totalCO2e / parseInt(selectedPeriod)) / 1000).toFixed(2)
+                      ? (stats.summary.totalCO2e / parseInt(selectedPeriod)).toFixed(2)
                       : "0.00"}
-                    <span className="text-sm ml-1">t</span>
+                    <span className="text-sm ml-1">kg</span>
                   </p>
                 </div>
 
@@ -1244,9 +1255,9 @@ export default function AnalyticsPage() {
                   </div>
                   <p className="text-3xl font-bold">
                     {stats?.summary.totalCO2e
-                      ? (stats.summary.totalCO2e / 1000).toFixed(2)
+                      ? (stats.summary.totalCO2e).toFixed(2)
                       : "0.00"}
-                    <span className="text-sm ml-1">t CO₂e</span>
+                    <span className="text-sm ml-1">kg CO₂e</span>
                   </p>
                 </div>
 
@@ -1257,9 +1268,9 @@ export default function AnalyticsPage() {
                   </div>
                   <p className="text-3xl font-bold">
                     {stats?.summary.totalCO2e
-                      ? ((stats.summary.totalCO2e * 1.12) / 1000).toFixed(2)
+                      ? ((stats.summary.totalCO2e * 1.12)).toFixed(2)
                       : "0.00"}
-                    <span className="text-sm ml-1">t CO₂e</span>
+                    <span className="text-sm ml-1">kg CO₂e</span>
                   </p>
                 </div>
 
@@ -1273,7 +1284,7 @@ export default function AnalyticsPage() {
                   </div>
                   <p className="text-3xl font-bold text-green-600">
                     {stats?.summary.totalCO2e
-                      ? ((stats.summary.totalCO2e * 0.12) / 1000).toFixed(2)
+                      ? ((stats.summary.totalCO2e * 0.12)).toFixed(2)
                       : "0.00"}
                     <span className="text-sm ml-1">t saved</span>
                   </p>
@@ -1300,18 +1311,18 @@ export default function AnalyticsPage() {
                     data={[
                       {
                         scope: "Scope 1",
-                        current: stats?.summary.scope1 ? stats.summary.scope1 / 1000 : 0,
-                        previous: stats?.summary.scope1 ? (stats.summary.scope1 * 1.15) / 1000 : 0,
+                        current: stats?.summary.scope1 ? stats.summary.scope1 : 0,
+                        previous: stats?.summary.scope1 ? (stats.summary.scope1 * 1.15) : 0,
                       },
                       {
                         scope: "Scope 2",
-                        current: stats?.summary.scope2 ? stats.summary.scope2 / 1000 : 0,
-                        previous: stats?.summary.scope2 ? (stats.summary.scope2 * 1.08) / 1000 : 0,
+                        current: stats?.summary.scope2 ? stats.summary.scope2 : 0,
+                        previous: stats?.summary.scope2 ? (stats.summary.scope2 * 1.08) : 0,
                       },
                       {
                         scope: "Scope 3",
-                        current: stats?.summary.scope3 ? stats.summary.scope3 / 1000 : 0,
-                        previous: stats?.summary.scope3 ? (stats.summary.scope3 * 1.12) / 1000 : 0,
+                        current: stats?.summary.scope3 ? stats.summary.scope3 : 0,
+                        previous: stats?.summary.scope3 ? (stats.summary.scope3 * 1.12) : 0,
                       },
                     ]}
                   >
@@ -1321,7 +1332,7 @@ export default function AnalyticsPage() {
                       content={
                         <ChartTooltipContent
                           formatter={(value) => [
-                            `${typeof value === "number" ? value.toFixed(2) : value} t CO₂e`,
+                            `${typeof value === "number" ? value.toFixed(2) : value} kg CO₂e`,
                             "",
                           ]}
                         />
@@ -1352,7 +1363,7 @@ export default function AnalyticsPage() {
                         <div>
                           <p className="font-medium">{item.scope}</p>
                           <p className="text-sm text-muted-foreground">
-                            {(item.current / 1000).toFixed(2)} t CO₂e
+                            {(item.current).toFixed(2)} kg CO₂e
                           </p>
                         </div>
                       </div>
@@ -1421,7 +1432,7 @@ export default function AnalyticsPage() {
                     const peak = stats.timeSeries.reduce((prev, current) =>
                       current.total > prev.total ? current : prev
                     );
-                    return (peak.total / 1000).toFixed(1);
+                    return (peak.total).toFixed(1);
                   })()}
                   <span className="text-sm ml-1">t</span>
                 </CardTitle>
@@ -1452,7 +1463,7 @@ export default function AnalyticsPage() {
                     const lowest = stats.timeSeries.reduce((prev, current) =>
                       current.total < prev.total ? current : prev
                     );
-                    return (lowest.total / 1000).toFixed(1);
+                    return (lowest.total).toFixed(1);
                   })()}
                   <span className="text-sm ml-1">t</span>
                 </CardTitle>
@@ -1480,7 +1491,7 @@ export default function AnalyticsPage() {
                 <CardTitle className="text-2xl sm:text-3xl font-semibold tabular-nums">
                   {(() => {
                     if (!stats?.timeSeries || stats.timeSeries.length === 0) return "N/A";
-                    const values = stats.timeSeries.map(item => item.total / 1000);
+                    const values = stats.timeSeries.map(item => item.total);
                     const avg = values.reduce((a, b) => a + b, 0) / values.length;
                     const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length;
                     const stdDev = Math.sqrt(variance);
@@ -1529,9 +1540,9 @@ export default function AnalyticsPage() {
                     <h4 className="font-semibold mb-1">Predicted Next Period</h4>
                     <p className="text-2xl font-bold text-purple-600">
                       {stats?.summary.totalCO2e
-                        ? ((stats.summary.totalCO2e * 1.05) / 1000).toFixed(2)
+                        ? ((stats.summary.totalCO2e * 1.05)).toFixed(2)
                         : "0.00"}
-                      <span className="text-sm ml-1">t CO₂e</span>
+                      <span className="text-sm ml-1">kg CO₂e</span>
                     </p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Based on current trends, emissions may increase by 5% next period.
@@ -1629,7 +1640,10 @@ export default function AnalyticsPage() {
               stats.topCategories.length > 0 ? (
                 <div className="space-y-4">
                   {stats.topCategories.map((cat, index) => (
-                    <Dialog key={index} open={drillDownCategory === cat.category} onOpenChange={(open) => setDrillDownCategory(open ? cat.category : null)}>
+                    <Dialog key={index} open={drillDownCategory === cat.category} onOpenChange={(open) => {
+                      setDrillDownCategory(open ? cat.category : null);
+                      if (open) loadDrillDownData(cat.category, undefined);
+                    }}>
                       <DialogTrigger asChild>
                         <div
                           className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group"
@@ -1651,7 +1665,7 @@ export default function AnalyticsPage() {
                             </div>
                           </div>
                           <span className="ml-4 text-sm font-medium">
-                            {(cat.co2e / 1000).toFixed(2)} t
+                            {(cat.co2e).toFixed(2)} kg
                           </span>
                         </div>
                       </DialogTrigger>
@@ -1673,8 +1687,8 @@ export default function AnalyticsPage() {
                             <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
                               <p className="text-sm text-muted-foreground mb-1">Total Emissions</p>
                               <p className="text-2xl font-bold text-blue-600">
-                                {(cat.co2e / 1000).toFixed(2)}
-                                <span className="text-sm ml-1">t CO₂e</span>
+                                {(cat.co2e).toFixed(2)}
+                                <span className="text-sm ml-1">kg CO₂e</span>
                               </p>
                             </div>
                             <div className="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
@@ -1698,40 +1712,42 @@ export default function AnalyticsPage() {
                               Monthly Trend
                             </h4>
                             <div className="h-[200px] border rounded-lg p-4">
-                              <ChartContainer
-                                config={{
-                                  emissions: {
-                                    label: "Emissions",
-                                    color: "hsl(221, 83%, 53%)",
-                                  },
-                                }}
-                                className="h-full w-full"
-                              >
-                                <BarChart
-                                  data={[
-                                    { month: "Jan", emissions: (cat.co2e / 1000) * 0.85 },
-                                    { month: "Feb", emissions: (cat.co2e / 1000) * 0.92 },
-                                    { month: "Mar", emissions: (cat.co2e / 1000) * 0.88 },
-                                    { month: "Apr", emissions: (cat.co2e / 1000) * 1.05 },
-                                    { month: "May", emissions: (cat.co2e / 1000) * 0.95 },
-                                    { month: "Jun", emissions: cat.co2e / 1000 },
-                                  ]}
+                              {loadingDrillDown ? (
+                                <div className="flex items-center justify-center h-full">
+                                  <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                </div>
+                              ) : (
+                                <ChartContainer
+                                  config={{
+                                    emissions: {
+                                      label: "Emissions",
+                                      color: "hsl(221, 83%, 53%)",
+                                    },
+                                  }}
+                                  className="h-full w-full"
                                 >
+                                  <BarChart
+                                    data={drillDownData?.monthlyData.map(d => ({
+                                      month: new Date(d.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+                                      emissions: d.total
+                                    })) || []}
+                                  >
                                   <CartesianGrid strokeDasharray="3 3" />
                                   <XAxis dataKey="month" />
                                   <ChartTooltip
                                     content={
                                       <ChartTooltipContent
                                         formatter={(value) => [
-                                          `${typeof value === "number" ? value.toFixed(2) : value} t CO₂e`,
+                                          `${typeof value === "number" ? value.toFixed(2) : value} kg CO₂e`,
                                           "Emissions",
                                         ]}
                                       />
                                     }
                                   />
-                                  <Bar dataKey="emissions" fill="var(--color-emissions)" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                              </ChartContainer>
+                                    <Bar dataKey="emissions" fill="var(--color-emissions)" radius={[4, 4, 0, 0]} />
+                                  </BarChart>
+                                </ChartContainer>
+                              )}
                             </div>
                           </div>
 
@@ -1762,7 +1778,7 @@ export default function AnalyticsPage() {
                                           {sub.trend}
                                         </Badge>
                                         <span className="text-sm font-semibold">
-                                          {((cat.co2e / 1000) * sub.value).toFixed(2)} t
+                                          {((cat.co2e) * sub.value).toFixed(2)} kg
                                         </span>
                                       </div>
                                     </div>
@@ -1841,7 +1857,10 @@ export default function AnalyticsPage() {
               {stats && stats.topSources && stats.topSources.length > 0 ? (
                 <div className="space-y-4">
                   {stats.topSources.map((src, index) => (
-                    <Dialog key={index} open={drillDownSource === src.source} onOpenChange={(open) => setDrillDownSource(open ? src.source : null)}>
+                    <Dialog key={index} open={drillDownSource === src.source} onOpenChange={(open) => {
+                      setDrillDownSource(open ? src.source : null);
+                      if (open) loadDrillDownData(undefined, src.source);
+                    }}>
                       <DialogTrigger asChild>
                         <div
                           className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors group"
@@ -1863,7 +1882,7 @@ export default function AnalyticsPage() {
                             </div>
                           </div>
                           <span className="ml-4 text-sm font-medium">
-                            {(src.co2e / 1000).toFixed(2)} t
+                            {(src.co2e).toFixed(2)} kg
                           </span>
                         </div>
                       </DialogTrigger>
@@ -1885,8 +1904,8 @@ export default function AnalyticsPage() {
                             <div className="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
                               <p className="text-sm text-muted-foreground mb-1">Total Emissions</p>
                               <p className="text-2xl font-bold text-green-600">
-                                {(src.co2e / 1000).toFixed(2)}
-                                <span className="text-sm ml-1">t CO₂e</span>
+                                {(src.co2e).toFixed(2)}
+                                <span className="text-sm ml-1">kg CO₂e</span>
                               </p>
                             </div>
                             <div className="p-4 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
@@ -1933,7 +1952,7 @@ export default function AnalyticsPage() {
                                       <ChartTooltipContent
                                         hideLabel
                                         formatter={(value, name) => [
-                                          `${typeof value === "number" ? value.toFixed(2) : value} t CO₂e`,
+                                          `${typeof value === "number" ? value.toFixed(2) : value} kg CO₂e`,
                                           name,
                                         ]}
                                       />
@@ -1941,9 +1960,9 @@ export default function AnalyticsPage() {
                                   />
                                   <Pie
                                     data={[
-                                      { scope: "scope1", emissions: (src.co2e / 1000) * 0.45, fill: "var(--color-scope1)" },
-                                      { scope: "scope2", emissions: (src.co2e / 1000) * 0.30, fill: "var(--color-scope2)" },
-                                      { scope: "scope3", emissions: (src.co2e / 1000) * 0.25, fill: "var(--color-scope3)" },
+                                      { scope: "scope1", emissions: (src.co2e) * 0.45, fill: "var(--color-scope1)" },
+                                      { scope: "scope2", emissions: (src.co2e) * 0.30, fill: "var(--color-scope2)" },
+                                      { scope: "scope3", emissions: (src.co2e) * 0.25, fill: "var(--color-scope3)" },
                                     ]}
                                     dataKey="emissions"
                                     nameKey="scope"
@@ -1962,46 +1981,48 @@ export default function AnalyticsPage() {
                               6-Month Emissions Trend
                             </h4>
                             <div className="h-[200px] border rounded-lg p-4">
-                              <ChartContainer
-                                config={{
-                                  emissions: {
-                                    label: "Emissions",
-                                    color: "hsl(142, 71%, 45%)",
-                                  },
-                                }}
-                                className="h-full w-full"
-                              >
-                                <LineChart
-                                  data={[
-                                    { month: "Jan", emissions: (src.co2e / 1000) * 0.90 },
-                                    { month: "Feb", emissions: (src.co2e / 1000) * 0.95 },
-                                    { month: "Mar", emissions: (src.co2e / 1000) * 0.88 },
-                                    { month: "Apr", emissions: (src.co2e / 1000) * 1.02 },
-                                    { month: "May", emissions: (src.co2e / 1000) * 0.98 },
-                                    { month: "Jun", emissions: src.co2e / 1000 },
-                                  ]}
+                              {loadingDrillDown ? (
+                                <div className="flex items-center justify-center h-full">
+                                  <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                                </div>
+                              ) : (
+                                <ChartContainer
+                                  config={{
+                                    emissions: {
+                                      label: "Emissions",
+                                      color: "hsl(142, 71%, 45%)",
+                                    },
+                                  }}
+                                  className="h-full w-full"
                                 >
+                                  <LineChart
+                                    data={drillDownData?.monthlyData.map(d => ({
+                                      month: new Date(d.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+                                      emissions: d.total
+                                    })) || []}
+                                  >
                                   <CartesianGrid strokeDasharray="3 3" />
                                   <XAxis dataKey="month" />
                                   <ChartTooltip
                                     content={
                                       <ChartTooltipContent
                                         formatter={(value) => [
-                                          `${typeof value === "number" ? value.toFixed(2) : value} t CO₂e`,
+                                          `${typeof value === "number" ? value.toFixed(2) : value} kg CO₂e`,
                                           "Emissions",
                                         ]}
                                       />
                                     }
                                   />
-                                  <Line
-                                    type="monotone"
-                                    dataKey="emissions"
-                                    stroke="var(--color-emissions)"
-                                    strokeWidth={2}
-                                    dot={{ fill: "var(--color-emissions)" }}
-                                  />
-                                </LineChart>
-                              </ChartContainer>
+                                    <Line
+                                      type="monotone"
+                                      dataKey="emissions"
+                                      stroke="var(--color-emissions)"
+                                      strokeWidth={2}
+                                      dot={{ fill: "var(--color-emissions)" }}
+                                    />
+                                  </LineChart>
+                                </ChartContainer>
+                              )}
                             </div>
                           </div>
 
@@ -2041,7 +2062,7 @@ export default function AnalyticsPage() {
                                           {activity.intensity}
                                         </Badge>
                                         <span className="text-sm font-semibold">
-                                          {((src.co2e / 1000) * activity.value).toFixed(2)} t
+                                          {((src.co2e) * activity.value).toFixed(2)} kg
                                         </span>
                                       </div>
                                     </div>

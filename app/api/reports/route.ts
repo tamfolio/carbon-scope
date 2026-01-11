@@ -269,8 +269,8 @@ export async function GET(request: Request) {
     );
     const totalWaste = wasteCategories.reduce((acc, e) => acc + (e._sum.co2e || 0), 0);
 
-    // Calculate combined totals (convert financed emissions from tonnes to kg for comparison)
-    const totalFinancedEmissionsKg = (financedEmissionsTotal._sum.totalEmissions || 0) * 1000;
+    // Calculate combined totals (financed emissions now in kg after migration)
+    const totalFinancedEmissionsKg = financedEmissionsTotal._sum.totalEmissions || 0; // Already in kg
     const grandTotalKg = totalCO2e + totalFinancedEmissionsKg;
 
     return NextResponse.json({
@@ -286,12 +286,12 @@ export async function GET(request: Request) {
         scope2,
         scope3,
         totalEntries,
-        // Financed emissions (in tonnes)
-        totalFinancedEmissionsTonnes: financedEmissionsTotal._sum.totalEmissions || 0,
+        // Financed emissions (in kg CO₂e)
+        totalFinancedEmissionsTonnes: totalFinancedEmissionsKg, // Name kept for compatibility, value in kg
         totalFinancedEmissionsKg,
         // Combined total (in kg)
         grandTotalKg,
-        grandTotalTonnes: grandTotalKg / 1000,
+        grandTotalTonnes: grandTotalKg, // Name kept for compatibility, value in kg
         reportingPeriod: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
       },
       emissions: {

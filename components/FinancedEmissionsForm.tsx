@@ -448,7 +448,7 @@ export default function FinancedEmissionsForm() {
                         {emission.currency} {emission.investmentAmount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {emission.totalEmissions.toFixed(2)} tCO₂e
+                        {emission.totalEmissions.toFixed(2)} kg CO₂e
                       </TableCell>
                       <TableCell>{emission.reportingYear}</TableCell>
                       <TableCell>

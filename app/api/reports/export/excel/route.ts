@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       ["Overall Emissions Summary"],
       ["Metric", "Value", "Unit"],
       ["Grand Total (Combined)", reportData.summary?.grandTotalKg?.toFixed(2) || "0", "kg CO2e"],
-      ["Grand Total (Combined)", reportData.summary?.grandTotalTonnes?.toFixed(2) || "0", "tCO2e"],
+      ["Grand Total (Combined)", reportData.summary?.grandTotalTonnes?.toFixed(2) || "0", "kg CO₂e"],
       [],
       ["Operations Emissions (Scope 1, 2, 3)"],
       ["Metric", "Value", "Unit"],
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       ["Scope 3 Emissions", reportData.summary?.scope3?.toFixed(2) || "0", "kg CO2e"],
       [],
       ["Financed Emissions"],
-      ["Total Financed", reportData.summary?.totalFinancedEmissionsTonnes?.toFixed(2) || "0", "tCO2e"],
+      ["Total Financed", reportData.summary?.totalFinancedEmissionsTonnes?.toFixed(2) || "0", "kg CO₂e"],
       ["Total Financed", reportData.summary?.totalFinancedEmissionsKg?.toFixed(2) || "0", "kg CO2e"],
       [],
       ["Data Points"],
@@ -145,17 +145,17 @@ export async function GET(request: Request) {
     // Sheet 6: Financed Emissions Summary
     const financedSummaryData = [
       ["Financed Emissions Summary"],
-      ["Note: Financed emissions are measured in tonnes (tCO2e)"],
+      ["Note: Financed emissions are measured in kg (kg CO₂e)"],
       [],
       ["Metric", "Value", "Unit"],
-      ["Total Financed Emissions", reportData.financedEmissions?.summary?.total?.toFixed(2) || "0", "tCO2e"],
-      ["Scope 1", reportData.financedEmissions?.summary?.scope1?.toFixed(2) || "0", "tCO2e"],
-      ["Scope 2", reportData.financedEmissions?.summary?.scope2?.toFixed(2) || "0", "tCO2e"],
-      ["Scope 3", reportData.financedEmissions?.summary?.scope3?.toFixed(2) || "0", "tCO2e"],
+      ["Total Financed Emissions", reportData.financedEmissions?.summary?.total?.toFixed(2) || "0", "kg CO₂e"],
+      ["Scope 1", reportData.financedEmissions?.summary?.scope1?.toFixed(2) || "0", "kg CO₂e"],
+      ["Scope 2", reportData.financedEmissions?.summary?.scope2?.toFixed(2) || "0", "kg CO₂e"],
+      ["Scope 3", reportData.financedEmissions?.summary?.scope3?.toFixed(2) || "0", "kg CO₂e"],
       ["Total Investments", reportData.financedEmissions?.summary?.count || "0", "entries"],
       [],
       ["By Sector"],
-      ["Sector", "Total CO2e (tonnes)", "Scope 1", "Scope 2", "Scope 3", "Investment Amount", "Count"],
+      ["Sector", "Total CO2e (kg)", "Scope 1", "Scope 2", "Scope 3", "Investment Amount", "Count"],
       ...(reportData.financedEmissions?.bySector || []).map((item: any) => [
         item.sector,
         item.total?.toFixed(2) || "0",
@@ -172,7 +172,7 @@ export async function GET(request: Request) {
     // Sheet 7: Financed Emissions by Type
     const financedTypeData = [
       ["Financed Emissions by Investment Type"],
-      ["Investment Type", "Total CO2e (tonnes)", "Investment Amount", "Count"],
+      ["Investment Type", "Total CO2e (kg)", "Investment Amount", "Count"],
       ...(reportData.financedEmissions?.byType || []).map((item: any) => [
         item.type,
         item.total?.toFixed(2) || "0",

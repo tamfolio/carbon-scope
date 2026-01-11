@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const { user: adminUser } = authResult;
-    const organizationId = adminUser.organizationId!;
+    const isSuperAdmin = adminUser.role === "SUPER_ADMIN";
     const { id } = await params;
 
     // Fetch user details
@@ -47,8 +47,8 @@ export async function GET(
       );
     }
 
-    // Verify user belongs to same organization
-    if (user.organizationId !== organizationId) {
+    // Verify user belongs to same organization (unless super admin)
+    if (!isSuperAdmin && user.organizationId !== adminUser.organizationId) {
       return NextResponse.json(
         { error: "Forbidden - User belongs to a different organization" },
         { status: 403 }
@@ -56,8 +56,12 @@ export async function GET(
     }
 
     // Get recent activities by this user
+    const activityFilter = isSuperAdmin
+      ? { userId: id }
+      : { userId: id, organizationId: adminUser.organizationId };
+
     const recentActivities = await prisma.activityLog.findMany({
-      where: { userId: id, organizationId },
+      where: activityFilter,
       take: 10,
       orderBy: { createdAt: "desc" },
     });
@@ -86,7 +90,7 @@ export async function PATCH(
     }
 
     const { user: adminUser } = authResult;
-    const organizationId = adminUser.organizationId!;
+    const isSuperAdmin = adminUser.role === "SUPER_ADMIN";
     const { id } = await params;
 
     // Parse request body
@@ -102,6 +106,7 @@ export async function PATCH(
         role: true,
         isActive: true,
         name: true,
+        email: true,
       },
     });
 
@@ -112,8 +117,8 @@ export async function PATCH(
       );
     }
 
-    // Verify user belongs to same organization
-    if (currentUser.organizationId !== organizationId) {
+    // Verify user belongs to same organization (unless super admin)
+    if (!isSuperAdmin && currentUser.organizationId !== adminUser.organizationId) {
       return NextResponse.json(
         { error: "Forbidden - User belongs to a different organization" },
         { status: 403 }
@@ -129,9 +134,10 @@ export async function PATCH(
     }
 
     // Validate role if provided
-    if (role && !["USER", "ADMIN"].includes(role)) {
+    const allowedRoles = isSuperAdmin ? ["USER", "ADMIN", "SUPER_ADMIN"] : ["USER", "ADMIN"];
+    if (role && !allowedRoles.includes(role)) {
       return NextResponse.json(
-        { error: "Invalid role. Must be USER or ADMIN" },
+        { error: `Invalid role. Must be one of: ${allowedRoles.join(", ")}` },
         { status: 400 }
       );
     }
@@ -159,16 +165,17 @@ export async function PATCH(
     });
 
     // Log activity
+    const logOrgId = isSuperAdmin ? adminUser.organizationId : currentUser.organizationId!;
     const changes = [];
     if (role !== undefined && role !== currentUser.role) {
       changes.push(`role from ${currentUser.role} to ${role}`);
       await createActivityLog({
         userId: adminUser.id,
-        organizationId,
+        organizationId: logOrgId,
         action: "ROLE_CHANGED",
         entityType: "User",
         entityId: id,
-        description: `Changed ${updatedUser.email}'s role from ${currentUser.role} to ${role}`,
+        description: `Changed ${currentUser.email}'s role from ${currentUser.role} to ${role}`,
         metadata: {
           previousRole: currentUser.role,
           newRole: role,
@@ -181,11 +188,11 @@ export async function PATCH(
       changes.push(`status to ${isActive ? "active" : "inactive"}`);
       await createActivityLog({
         userId: adminUser.id,
-        organizationId,
+        organizationId: logOrgId,
         action: isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
         entityType: "User",
         entityId: id,
-        description: `${isActive ? "Activated" : "Deactivated"} user ${updatedUser.email}`,
+        description: `${isActive ? "Activated" : "Deactivated"} user ${currentUser.email}`,
         metadata: {
           previousStatus: currentUser.isActive,
           newStatus: isActive,
@@ -198,11 +205,11 @@ export async function PATCH(
       changes.push(`name from ${currentUser.name || "null"} to ${name}`);
       await createActivityLog({
         userId: adminUser.id,
-        organizationId,
+        organizationId: logOrgId,
         action: "USER_UPDATED",
         entityType: "User",
         entityId: id,
-        description: `Updated ${updatedUser.email}'s name`,
+        description: `Updated ${currentUser.email}'s name`,
         metadata: {
           previousName: currentUser.name,
           newName: name,
@@ -235,7 +242,7 @@ export async function DELETE(
     }
 
     const { user: adminUser } = authResult;
-    const organizationId = adminUser.organizationId!;
+    const isSuperAdmin = adminUser.role === "SUPER_ADMIN";
     const { id } = await params;
 
     // Fetch user to delete
@@ -255,8 +262,8 @@ export async function DELETE(
       );
     }
 
-    // Verify user belongs to same organization
-    if (userToDelete.organizationId !== organizationId) {
+    // Verify user belongs to same organization (unless super admin)
+    if (!isSuperAdmin && userToDelete.organizationId !== adminUser.organizationId) {
       return NextResponse.json(
         { error: "Forbidden - User belongs to a different organization" },
         { status: 403 }
@@ -281,9 +288,10 @@ export async function DELETE(
     });
 
     // Log activity
+    const logOrgId = isSuperAdmin ? adminUser.organizationId : userToDelete.organizationId;
     await createActivityLog({
       userId: adminUser.id,
-      organizationId,
+      organizationId: logOrgId,
       action: "USER_REMOVED",
       entityType: "User",
       entityId: id,

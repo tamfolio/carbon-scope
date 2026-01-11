@@ -10,7 +10,9 @@ export async function GET(request: Request) {
     }
 
     const { user } = authResult;
-    const organizationId = user.organizationId!;
+    const isSuperAdmin = user.role === "SUPER_ADMIN";
+    const organizationId = user.organizationId || "";
+    const orgFilter = isSuperAdmin ? {} : { organizationId };
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
     const emissionsByUser = await prisma.emission.groupBy({
       by: ["userId"],
       where: {
-        organizationId,
+        ...orgFilter,
         createdAt: { gte: startDate },
       },
       _sum: {
@@ -84,7 +86,7 @@ export async function GET(request: Request) {
     const emissionsByCategory = await prisma.emission.groupBy({
       by: ["category"],
       where: {
-        organizationId,
+        ...orgFilter,
         createdAt: { gte: startDate },
       },
       _sum: {
@@ -104,7 +106,7 @@ export async function GET(request: Request) {
     const emissionsByScope = await prisma.emission.groupBy({
       by: ["scope"],
       where: {
-        organizationId,
+        ...orgFilter,
         createdAt: { gte: startDate },
       },
       _sum: {
@@ -119,28 +121,41 @@ export async function GET(request: Request) {
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(now.getMonth() - 12);
 
-    const emissionsTrend = await prisma.$queryRaw<Array<{
-      month: string;
-      total: number;
-      count: number;
-    }>>`
-      SELECT
-        strftime('%Y-%m', date) as month,
-        SUM(co2e) as total,
-        COUNT(*) as count
-      FROM Emission
-      WHERE organizationId = ${organizationId}
-        AND createdAt >= ${twelveMonthsAgo.toISOString()}
-      GROUP BY strftime('%Y-%m', date)
-      ORDER BY month ASC
-    `;
+    const emissionsTrend = isSuperAdmin
+      ? await prisma.$queryRaw<Array<{
+          month: string;
+          total: number;
+          count: number;
+        }>>`
+          SELECT
+            strftime('%Y-%m', date) as month,
+            SUM(co2e) as total,
+            COUNT(*) as count
+          FROM Emission
+          WHERE createdAt >= ${twelveMonthsAgo.toISOString()}
+          GROUP BY strftime('%Y-%m', date)
+          ORDER BY month ASC
+        `
+      : await prisma.$queryRaw<Array<{
+          month: string;
+          total: number;
+          count: number;
+        }>>`
+          SELECT
+            strftime('%Y-%m', date) as month,
+            SUM(co2e) as total,
+            COUNT(*) as count
+          FROM Emission
+          WHERE organizationId = ${organizationId}
+            AND createdAt >= ${twelveMonthsAgo.toISOString()}
+          GROUP BY strftime('%Y-%m', date)
+          ORDER BY month ASC
+        `;
 
     // Get financed emissions by sector (no date filter)
     const financedEmissionsBySector = await prisma.financedEmission.groupBy({
       by: ["sector"],
-      where: {
-        organizationId,
-      },
+      where: orgFilter,
       _sum: {
         totalEmissions: true,
         scope1: true,
@@ -160,9 +175,7 @@ export async function GET(request: Request) {
     // Get financed emissions by country (no date filter)
     const financedEmissionsByCountry = await prisma.financedEmission.groupBy({
       by: ["country"],
-      where: {
-        organizationId,
-      },
+      where: orgFilter,
       _sum: {
         totalEmissions: true,
       },
@@ -180,7 +193,7 @@ export async function GET(request: Request) {
     // Get user performance comparison
     const userPerformance = await prisma.user.findMany({
       where: {
-        organizationId,
+        ...orgFilter,
         isActive: true,
       },
       select: {
@@ -229,7 +242,7 @@ export async function GET(request: Request) {
     // Calculate total organization emissions for the period
     const totalEmissions = await prisma.emission.aggregate({
       where: {
-        organizationId,
+        ...orgFilter,
         createdAt: { gte: startDate },
       },
       _sum: {
@@ -242,9 +255,7 @@ export async function GET(request: Request) {
 
     // Calculate total financed emissions (no date filter)
     const totalFinancedEmissions = await prisma.financedEmission.aggregate({
-      where: {
-        organizationId,
-      },
+      where: orgFilter,
       _sum: {
         totalEmissions: true,
       },
@@ -253,10 +264,9 @@ export async function GET(request: Request) {
       },
     });
 
-    // Calculate combined totals (convert financed emissions from tonnes to kg)
+    // Calculate combined totals (financed emissions now in kg after migration)
     const operationsEmissionsKg = totalEmissions._sum.co2e || 0;
-    const financedEmissionsTonnes = totalFinancedEmissions._sum.totalEmissions || 0;
-    const financedEmissionsKg = financedEmissionsTonnes * 1000;
+    const financedEmissionsKg = totalFinancedEmissions._sum.totalEmissions || 0; // Already in kg
     const grandTotalKg = operationsEmissionsKg + financedEmissionsKg;
 
     return NextResponse.json({
@@ -267,11 +277,11 @@ export async function GET(request: Request) {
         // Operations only (for backward compatibility)
         co2e: operationsEmissionsKg,
         count: totalEmissions._count.id,
-        // Combined totals
-        financedTonnes: financedEmissionsTonnes,
+        // Combined totals (all in kg CO₂e)
+        financedTonnes: financedEmissionsKg, // Name kept for compatibility, but value is in kg
         financedKg: financedEmissionsKg,
         grandTotalKg,
-        grandTotalTonnes: grandTotalKg / 1000,
+        grandTotalTonnes: grandTotalKg, // Name kept for compatibility, but value is in kg
       },
       topContributors,
       emissionsByCategory: emissionsByCategory.map(e => ({

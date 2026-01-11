@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Shield } from "lucide-react";
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -23,6 +23,20 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Check if user is super admin
+  useEffect(() => {
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
+  }, []);
 
   const handleGenerateReport = async () => {
     setGenerating(true);
@@ -99,7 +113,9 @@ export default function ReportsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Reports & Export</h1>
         <p className="text-gray-600 mt-2">
-          Generate and download organization reports
+          {isSuperAdmin
+            ? "Generate and download system-wide reports"
+            : "Generate and download organization reports"}
         </p>
       </div>
 

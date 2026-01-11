@@ -10,17 +10,23 @@ export async function GET(request: Request) {
     }
 
     const { user } = authResult;
-    const organizationId = user.organizationId!;
+    const isSuperAdmin = user.role === "SUPER_ADMIN";
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
+    const organizationIdParam = searchParams.get("organizationId");
     const userId = searchParams.get("userId") || "";
     const action = searchParams.get("action") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
     // Build where clause
-    const where: any = { organizationId };
+    // Super admins can filter by organizationId parameter, regular admins use their org
+    const orgFilter = isSuperAdmin
+      ? (organizationIdParam ? { organizationId: organizationIdParam } : {})
+      : { organizationId: user.organizationId! };
+
+    const where: any = orgFilter;
 
     if (userId) {
       where.userId = userId;
@@ -56,7 +62,7 @@ export async function GET(request: Request) {
 
     // Get unique action types for filtering
     const actionTypes = await prisma.activityLog.findMany({
-      where: { organizationId },
+      where: orgFilter,
       select: { action: true },
       distinct: ["action"],
       orderBy: { action: "asc" },
@@ -64,7 +70,7 @@ export async function GET(request: Request) {
 
     // Get unique users who have activity logs for filtering
     const activeUserIds = await prisma.activityLog.findMany({
-      where: { organizationId },
+      where: orgFilter,
       select: { userId: true },
       distinct: ["userId"],
     });

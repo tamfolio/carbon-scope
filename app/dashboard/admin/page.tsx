@@ -14,7 +14,8 @@ import {
   TrendingDown,
   FileText,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from "lucide-react";
 
 interface OverviewData {
@@ -63,8 +64,19 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<OverviewData | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
     fetchOverview();
   }, []);
 
@@ -136,9 +148,13 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold">
+          {isSuperAdmin ? "System Dashboard" : "Admin Dashboard"}
+        </h1>
         <p className="text-gray-600 mt-2">
-          Organization overview and management
+          {isSuperAdmin
+            ? "System-wide overview and management"
+            : "Organization overview and management"}
         </p>
       </div>
 

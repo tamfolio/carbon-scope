@@ -124,23 +124,61 @@ export async function GET(request: NextRequest) {
     const periodType = searchParams.get('period') || 'month'; // day, week, month
     const daysBack = parseInt(searchParams.get('days') || '30');
 
-    // Calculate date range
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - daysBack);
-
-    // Build where clause
-    const where: any = {
+    // Build base where clause (without date filter initially)
+    const baseWhere: any = {
       userId: user.id,
+    };
+
+    if (user.organizationId) {
+      baseWhere.organizationId = user.organizationId;
+    }
+
+    // First, get the actual date range of user's emissions
+    const dateRange = await prisma.emission.aggregate({
+      where: baseWhere,
+      _min: { date: true },
+      _max: { date: true },
+    });
+
+    // If user has no emissions, return empty data
+    if (!dateRange._min.date || !dateRange._max.date) {
+      return NextResponse.json({
+        summary: {
+          totalCO2e: 0,
+          scope1: 0,
+          scope2: 0,
+          scope3: 0,
+          count: 0,
+        },
+        topCategories: [],
+        topSources: [],
+        timeSeries: [],
+        periodType,
+        dateRange: {
+          start: new Date().toISOString(),
+          end: new Date().toISOString(),
+        },
+      });
+    }
+
+    // Use the actual data range OR the requested period, whichever is more restrictive
+    const actualEndDate = new Date(dateRange._max.date);
+    const requestedEndDate = new Date();
+    const endDate = actualEndDate < requestedEndDate ? actualEndDate : requestedEndDate;
+
+    const requestedStartDate = new Date();
+    requestedStartDate.setDate(requestedStartDate.getDate() - daysBack);
+    const actualStartDate = new Date(dateRange._min.date);
+    const startDate = actualStartDate > requestedStartDate ? actualStartDate : requestedStartDate;
+
+    // Build where clause with date filter
+    const where: any = {
+      ...baseWhere,
       date: {
         gte: startDate,
         lte: endDate,
       },
     };
-
-    if (user.organizationId) {
-      where.organizationId = user.organizationId;
-    }
 
     // Get all emissions for the user
     const emissions = await prisma.emission.findMany({

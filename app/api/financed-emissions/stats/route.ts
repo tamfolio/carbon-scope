@@ -119,23 +119,61 @@ export async function GET(request: NextRequest) {
     const periodType = searchParams.get('period') || 'month'; // day, week, month
     const daysBack = parseInt(searchParams.get('days') || '30');
 
-    // Calculate date range
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - daysBack);
-
-    // Build where clause
-    const where: any = {
+    // Build base where clause (without date filter initially)
+    const baseWhere: any = {
       userId: user.id,
+    };
+
+    if (user.organizationId) {
+      baseWhere.organizationId = user.organizationId;
+    }
+
+    // First, get the actual date range of user's financed emissions
+    const dateRange = await prisma.financedEmission.aggregate({
+      where: baseWhere,
+      _min: { createdAt: true },
+      _max: { createdAt: true },
+    });
+
+    // If user has no financed emissions, return empty data
+    if (!dateRange._min.createdAt || !dateRange._max.createdAt) {
+      return NextResponse.json({
+        summary: {
+          totalCO2e: 0,
+          scope1: 0,
+          scope2: 0,
+          scope3: 0,
+          count: 0,
+        },
+        topSectors: [],
+        topInvestmentTypes: [],
+        timeSeries: [],
+        periodType,
+        dateRange: {
+          start: new Date().toISOString(),
+          end: new Date().toISOString(),
+        },
+      });
+    }
+
+    // Use the actual data range OR the requested period, whichever is more restrictive
+    const actualEndDate = new Date(dateRange._max.createdAt);
+    const requestedEndDate = new Date();
+    const endDate = actualEndDate < requestedEndDate ? actualEndDate : requestedEndDate;
+
+    const requestedStartDate = new Date();
+    requestedStartDate.setDate(requestedStartDate.getDate() - daysBack);
+    const actualStartDate = new Date(dateRange._min.createdAt);
+    const startDate = actualStartDate > requestedStartDate ? actualStartDate : requestedStartDate;
+
+    // Build where clause with date filter
+    const where: any = {
+      ...baseWhere,
       createdAt: {
         gte: startDate,
         lte: endDate,
       },
     };
-
-    if (user.organizationId) {
-      where.organizationId = user.organizationId;
-    }
 
     // Get all financed emissions for the user
     const financedEmissions = await prisma.financedEmission.findMany({

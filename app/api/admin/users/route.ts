@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     }
 
     const { user } = authResult;
-    const organizationId = user.organizationId!;
+    const isSuperAdmin = user.role === "SUPER_ADMIN";
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const status = searchParams.get("status") || "";
 
     // Build where clause
-    const where: any = { organizationId };
+    const where: any = isSuperAdmin ? {} : { organizationId: user.organizationId! };
 
     if (search) {
       where.OR = [
@@ -51,6 +51,13 @@ export async function GET(request: Request) {
         lastLoginAt: true,
         createdAt: true,
         invitedBy: true,
+        organizationId: true,
+        organization: isSuperAdmin ? {
+          select: {
+            id: true,
+            name: true,
+          },
+        } : false,
         _count: {
           select: {
             emissions: true,
@@ -80,11 +87,11 @@ export async function POST(request: Request) {
     }
 
     const { user: adminUser } = authResult;
-    const organizationId = adminUser.organizationId!;
+    const isSuperAdmin = adminUser.role === "SUPER_ADMIN";
 
     // Parse request body
     const body = await request.json();
-    const { email, name, role = "USER", sendEmail = false } = body;
+    const { email, name, role = "USER", sendEmail = false, organizationId: targetOrgId } = body;
 
     // Validate required fields
     if (!email) {
@@ -94,10 +101,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Determine organization ID
+    let organizationId: string | null;
+    if (isSuperAdmin) {
+      // Super admin can create users for any organization or no organization (for SUPER_ADMIN users)
+      organizationId = role === "SUPER_ADMIN" ? null : (targetOrgId || null);
+
+      // If creating a regular user/admin, organizationId is required
+      if (role !== "SUPER_ADMIN" && !organizationId) {
+        return NextResponse.json(
+          { error: "organizationId is required when creating USER or ADMIN" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Regular admin can only create users in their own organization
+      organizationId = adminUser.organizationId!;
+    }
+
     // Validate role
-    if (!["USER", "ADMIN"].includes(role)) {
+    const allowedRoles = isSuperAdmin ? ["USER", "ADMIN", "SUPER_ADMIN"] : ["USER", "ADMIN"];
+    if (!allowedRoles.includes(role)) {
       return NextResponse.json(
-        { error: "Invalid role. Must be USER or ADMIN" },
+        { error: `Invalid role. Must be one of: ${allowedRoles.join(", ")}` },
         { status: 400 }
       );
     }
@@ -142,7 +168,7 @@ export async function POST(request: Request) {
     // Log activity
     await createActivityLog({
       userId: adminUser.id,
-      organizationId,
+      organizationId: isSuperAdmin ? adminUser.organizationId : organizationId,
       action: "USER_INVITED",
       entityType: "User",
       entityId: newUser.id,

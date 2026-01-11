@@ -42,11 +42,18 @@ export default function LoginPage() {
         throw new Error(data?.error || "Login failed");
       }
 
-      if (data?.token) {
+      if (data?.token && data?.user) {
         localStorage.setItem("cs_token", data.token);
+        localStorage.setItem("cs_user", JSON.stringify(data.user));
         setSuccess("Logged in successfully! Redirecting...");
+
+        // Redirect based on user role
+        const redirectPath = data.user.role === "SUPER_ADMIN"
+          ? "/dashboard/super-admin"
+          : "/dashboard";
+
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push(redirectPath);
         }, 500);
       }
     } catch (err) {

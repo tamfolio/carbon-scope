@@ -40,6 +40,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Update last login timestamp
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     // Generate token
     const token = generateToken(user.id);
 

@@ -35,6 +35,8 @@ import {
   Leaf,
   UserCog,
   Activity,
+  Building2,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +56,33 @@ interface UserData {
 }
 
 const getNavigationGroups = (userRole?: string) => {
+  // Super Admin gets a completely different navigation
+  if (userRole === "SUPER_ADMIN") {
+    return [
+      {
+        title: "System Overview",
+        items: [
+          { name: "Super Admin Dashboard", href: "/dashboard/super-admin", icon: Crown },
+        ],
+      },
+      {
+        title: "System Management",
+        items: [
+          { name: "Organizations", href: "/dashboard/super-admin/organizations", icon: Building2 },
+          { name: "All Users", href: "/dashboard/super-admin/users", icon: UserCog },
+        ],
+      },
+      {
+        title: "System Analytics",
+        items: [
+          { name: "System Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+          { name: "System Reports", href: "/dashboard/admin/reports", icon: FileText },
+          { name: "Activity Logs", href: "/dashboard/admin/activity", icon: Activity },
+        ],
+      },
+    ];
+  }
+
   const baseGroups = [
     {
       title: "Overview",
@@ -84,8 +113,8 @@ const getNavigationGroups = (userRole?: string) => {
     },
   ];
 
-  // Add Administration section for ADMIN and SUPER_ADMIN users
-  if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
+  // Add Administration section for ADMIN users
+  if (userRole === "ADMIN") {
     baseGroups.push({
       title: "Administration",
       items: [

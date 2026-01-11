@@ -227,35 +227,26 @@ export function aggregateByYear(
 
 /**
  * Convert CO2e from kg to tonnes
+ * NOTE: Deprecated - All units standardized to kg CO₂e
  */
-export function kgToTonnes(kg: number): number {
-  return Math.round((kg / 1000) * 100) / 100;
-}
+// export function kgToTonnes(kg: number): number {
+//   return Math.round((kg / 1000) * 100) / 100;
+// }
 
 /**
  * Convert CO2e from tonnes to kg
+ * NOTE: Deprecated - All units standardized to kg CO₂e
  */
-export function tonnesToKg(tonnes: number): number {
-  return Math.round(tonnes * 1000 * 100) / 100;
-}
+// export function tonnesToKg(tonnes: number): number {
+//   return Math.round(tonnes * 1000 * 100) / 100;
+// }
 
 /**
- * Format CO2e for display with appropriate unit
+ * Format CO2e for display - always shows in kg CO₂e
+ * All emission values standardized to kg for consistency across the application
  */
 export function formatCO2e(kg: number): string {
-  if (kg >= 1000000) {
-    // Use kilotonnes for very large values
-    return `${Math.round((kg / 1000000) * 10) / 10} kt CO₂e`;
-  } else if (kg >= 1000) {
-    // Use tonnes for values >= 1000 kg
-    return `${kgToTonnes(kg)} t CO₂e`;
-  } else if (kg >= 1) {
-    // Use kg for values >= 1 kg
-    return `${Math.round(kg * 100) / 100} kg CO₂e`;
-  } else {
-    // Use grams for very small values
-    return `${Math.round(kg * 1000)} g CO₂e`;
-  }
+  return `${Math.round(kg * 100) / 100} kg CO₂e`;
 }
 
 // ============================================================================

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Shield } from "lucide-react";
 
 interface AnalyticsData {
   period: string;
@@ -75,8 +75,19 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("month");
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
     fetchAnalytics();
   }, [period]);
 
@@ -135,9 +146,13 @@ export default function AnalyticsPage() {
     <DashboardLayout>
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Organization Analytics</h1>
+          <h1 className="text-3xl font-bold">
+            {isSuperAdmin ? "System Analytics" : "Organization Analytics"}
+          </h1>
           <p className="text-gray-600 mt-2">
-            Organization-wide performance and insights
+            {isSuperAdmin
+              ? "System-wide performance and insights"
+              : "Organization-wide performance and insights"}
           </p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
@@ -162,15 +177,12 @@ export default function AnalyticsPage() {
           <CardContent>
             {(() => {
               const grandTotal = data.totalEmissions.grandTotalKg;
-              const formatted = grandTotal >= 1000
-                ? { value: (grandTotal / 1000).toFixed(2), unit: "tCO₂e" }
-                : { value: grandTotal.toFixed(2), unit: "kg CO₂e" };
               return (
                 <>
-                  <div className="text-2xl font-bold">{formatted.value} {formatted.unit}</div>
+                  <div className="text-2xl font-bold">{grandTotal.toFixed(2)} kg CO₂e</div>
                   <div className="text-xs text-muted-foreground mt-2">
                     <div>Operations: {formatNumber(data.totalEmissions.co2e)} kg</div>
-                    <div>Financed: {data.totalEmissions.financedTonnes.toFixed(2)} tCO₂e</div>
+                    <div>Financed: {data.totalEmissions.financedTonnes.toFixed(2)} kg CO₂e</div>
                   </div>
                 </>
               );
