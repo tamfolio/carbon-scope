@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
     // Check if organization already exists
     const existing = await prisma.organization.findFirst({
-      where: { name: { equals: name, mode: "insensitive" } },
+      where: { name },
     });
 
     if (existing) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -49,7 +49,7 @@ import {
   type EmissionFactor,
   type CategoryInfo,
 } from "@/lib/emissionFactors";
-import { getSourcesForCategory } from "@/lib/activityHelpers";
+import { getSourcesForCategory, assessDataQuality } from "@/lib/activityHelpers";
 import { calculateEmissions, formatCO2e } from "@/lib/calculationEngine";
 import { cn } from "@/lib/utils";
 import FinancedEmissionsForm from "@/components/FinancedEmissionsForm";
@@ -70,7 +70,7 @@ interface Emission {
   updatedAt: string;
 }
 
-export default function EmissionsPage() {
+function EmissionsPageContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "operations");
 
@@ -1283,5 +1283,13 @@ export default function EmissionsPage() {
         }
       `}</style>
     </DashboardLayout>
+  );
+}
+
+export default function EmissionsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EmissionsPageContent />
+    </Suspense>
   );
 }

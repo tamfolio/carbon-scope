@@ -334,8 +334,8 @@ export default function SuperAdminUsersPage() {
     }
 
     setTransferring(true);
-    // Convert "__NONE__" to null for the API
-    const orgId = transferTargetOrgId === "__NONE__" ? null : transferTargetOrgId;
+    // Convert "__NONE__" to undefined for the API
+    const orgId = transferTargetOrgId === "__NONE__" ? undefined : transferTargetOrgId;
     const success = await executeBulkOperation("transfer", orgId);
     setTransferring(false);
 

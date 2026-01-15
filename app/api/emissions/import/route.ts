@@ -11,9 +11,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await verifyToken(token);
-    if (!user) {
+    const decoded = verifyToken(token);
+    if (!decoded) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Fetch user details
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, organizationId: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const formData = await request.formData();
@@ -89,7 +99,7 @@ export async function POST(request: NextRequest) {
             source: record.source,
             quantity: record.quantity,
             unit: record.unit,
-            emissionFactor: emissionResult.emissionFactor,
+            emissionFactor: emissionResult.emissionFactor.factor,
             co2e: emissionResult.co2e,
             date: new Date(record.date),
             notes: record.notes,
