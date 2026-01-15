@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  lastLoginAt DateTime?
+  invitedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId     String?
+  organization       Organization? @relation(fields: [organizationId], references: [id])
+  emissions          Emission[]
+  financedEmissions  FinancedEmission[]
+  activityLogs       ActivityLog[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users             User[]
+  emissions         Emission[]
+  financedEmissions FinancedEmission[]
+  activityLogs      ActivityLog[]
+  settings          OrganizationSettings?
+}
+
+model OrganizationSettings {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userLimit        Int?     // null = unlimited users
+  emissionLimit    Int?     // null = unlimited emissions
+  features         String?  // JSON: { financedEmissions, advancedAnalytics, apiAccess, customReports }
+  customSettings   String?  // JSON for additional custom settings
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Emission {
+  id             String   @id @default(cuid())
+  scope          String   // Scope 1, 2, or 3
+  category       String
+  activity       String
+  source         String
+  quantity       Float
+  unit           String
+  emissionFactor Float
+  co2e           Float    // CO2 equivalent in kg
+  date           DateTime
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model FinancedEmission {
+  id                 String   @id @default(cuid())
+  investmentName     String
+  investmentType     String
+  investmentAmount   Float
+  currency           String
+  companyName        String
+  sector             String
+  country            String
+  attributionFactor  Float    // Percentage 0-100
+  scope1             Float    // Scope 1 emissions in kg CO₂e
+  scope2             Float    // Scope 2 emissions in kg CO₂e
+  scope3             Float    // Scope 3 emissions in kg CO₂e
+  totalEmissions     Float    // Total emissions in kg CO₂e (scope1 + scope2 + scope3)
+  calculationMethod  String
+  dataQualityScore   Float    // PCAF score 1-5
+  reportingYear      String
+  reportingPeriod    String
+  dataSource         String
+  description        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  action         String   // e.g., "USER_INVITED", "ROLE_CHANGED", "USER_DEACTIVATED"
+  entityType     String   // e.g., "User", "Emission", "Organization"
+  entityId       String?
+  description    String
+  metadata       String?  // JSON string for additional data
+  createdAt      DateTime @default(now())
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}

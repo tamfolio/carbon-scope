@@ -1,0 +1,28 @@
+-- CreateTable
+CREATE TABLE "FinancedEmission" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "investmentName" TEXT NOT NULL,
+    "investmentType" TEXT NOT NULL,
+    "investmentAmount" REAL NOT NULL,
+    "currency" TEXT NOT NULL,
+    "companyName" TEXT NOT NULL,
+    "sector" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "attributionFactor" REAL NOT NULL,
+    "scope1" REAL NOT NULL,
+    "scope2" REAL NOT NULL,
+    "scope3" REAL NOT NULL,
+    "totalEmissions" REAL NOT NULL,
+    "calculationMethod" TEXT NOT NULL,
+    "dataQualityScore" REAL NOT NULL,
+    "reportingYear" TEXT NOT NULL,
+    "reportingPeriod" TEXT NOT NULL,
+    "dataSource" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "userId" TEXT NOT NULL,
+    "organizationId" TEXT,
+    CONSTRAINT "FinancedEmission_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "FinancedEmission_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
