@@ -30,6 +30,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user is active (not soft-deleted)
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Your account has been deactivated. Please contact your administrator." },
+        { status: 403 }
+      );
+    }
+
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password);
 

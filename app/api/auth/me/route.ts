@@ -32,6 +32,7 @@ export async function GET(request: Request) {
         email: true,
         name: true,
         role: true,
+        isActive: true,
         createdAt: true,
         organizationId: true,
         organization: {
@@ -48,6 +49,14 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
+      );
+    }
+
+    // Check if user is active (not soft-deleted)
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Your account has been deactivated. Please contact your administrator." },
+        { status: 403 }
       );
     }
 

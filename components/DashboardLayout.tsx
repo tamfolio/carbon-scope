@@ -107,7 +107,6 @@ const getNavigationGroups = (userRole?: string) => {
     {
       title: "Organization",
       items: [
-        { name: "Team", href: "/dashboard/team", icon: Users },
         { name: "Settings", href: "/dashboard/settings", icon: Settings },
       ],
     },
