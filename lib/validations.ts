@@ -11,42 +11,29 @@ import { z } from 'zod';
 
 export const EmissionInputSchema = z.object({
   scope: z.enum(['Scope 1', 'Scope 2', 'Scope 3'], {
-    required_error: 'Please select an emission scope',
-    invalid_type_error: 'Invalid scope type',
+    message: 'Please select a valid emission scope (Scope 1, 2, or 3)',
   }),
 
-  category: z.string({
-    required_error: 'Please select a category',
-  }).min(1, 'Category is required'),
+  category: z.string().min(1, 'Category is required'),
 
-  activity: z.string({
-    required_error: 'Please describe the activity',
-  }).min(3, 'Activity description must be at least 3 characters')
+  activity: z.string().min(3, 'Activity description must be at least 3 characters')
     .max(500, 'Activity description must be less than 500 characters'),
 
-  source: z.string({
-    required_error: 'Please select an emission source',
-  }).min(1, 'Source is required'),
+  source: z.string().min(1, 'Source is required'),
 
   quantity: z.number({
-    required_error: 'Please enter a quantity',
-    invalid_type_error: 'Quantity must be a number',
+    message: 'Quantity must be a valid number',
   })
     .positive('Quantity must be greater than 0')
     .finite('Quantity must be a finite number')
     .max(1000000000, 'Quantity is unreasonably large'),
 
-  unit: z.string({
-    required_error: 'Please select a unit',
-  }).min(1, 'Unit is required'),
+  unit: z.string().min(1, 'Unit is required'),
 
-  emissionFactorId: z.string({
-    required_error: 'Emission factor is required',
-  }).min(1, 'Please select a valid emission factor'),
+  emissionFactorId: z.string().min(1, 'Please select a valid emission factor'),
 
   date: z.coerce.date({
-    required_error: 'Please select a date',
-    invalid_type_error: 'Invalid date format',
+    message: 'Please select a valid date',
   })
     .max(new Date(), 'Date cannot be in the future')
     .min(new Date('1900-01-01'), 'Date is too far in the past'),
@@ -63,9 +50,7 @@ export type EmissionInputType = z.infer<typeof EmissionInputSchema>;
 // ============================================================================
 
 export const EmissionUpdateSchema = EmissionInputSchema.partial().extend({
-  id: z.string({
-    required_error: 'Emission ID is required for updates',
-  }),
+  id: z.string().min(1, 'Emission ID is required for updates'),
 });
 
 export type EmissionUpdateType = z.infer<typeof EmissionUpdateSchema>;
@@ -165,10 +150,10 @@ export type OrganizationType = z.infer<typeof OrganizationSchema>;
 
 export const DateRangeSchema = z.object({
   startDate: z.coerce.date({
-    required_error: 'Start date is required',
+    message: 'Start date is required',
   }),
   endDate: z.coerce.date({
-    required_error: 'End date is required',
+    message: 'End date is required',
   }),
 }).refine((data) => data.endDate >= data.startDate, {
   message: 'End date must be after or equal to start date',
@@ -218,7 +203,7 @@ export function safeValidate<T>(
  */
 export function formatZodErrors(error: z.ZodError): Record<string, string> {
   const formattedErrors: Record<string, string> = {};
-  error.errors.forEach((err) => {
+  error.issues.forEach((err) => {
     const path = err.path.join('.');
     formattedErrors[path] = err.message;
   });
