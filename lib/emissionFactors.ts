@@ -258,6 +258,82 @@ export const emissionFactors: EmissionFactor[] = [
   },
 
   // ========================================
+  // SCOPE 1 - PROCESS EMISSIONS
+  // ========================================
+  {
+    id: 'cement-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Cement Production',
+    unit: 'kg',
+    factor: 0.93, // kg CO2e per kg of cement
+    description: 'CO2 released from calcination of limestone in cement production',
+  },
+  {
+    id: 'lime-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Lime Production',
+    unit: 'kg',
+    factor: 0.79, // kg CO2e per kg of lime
+    description: 'CO2 released from calcination of limestone to produce lime',
+  },
+  {
+    id: 'ammonia-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Ammonia Production',
+    unit: 'kg',
+    factor: 2.15, // kg CO2e per kg of ammonia
+    description: 'CO2 from ammonia synthesis in chemical manufacturing',
+  },
+  {
+    id: 'steel-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Steel Production (Blast Furnace)',
+    unit: 'kg',
+    factor: 1.85, // kg CO2e per kg of steel
+    description: 'CO2 from iron ore reduction in steel manufacturing',
+  },
+  {
+    id: 'aluminum-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Aluminum Smelting',
+    unit: 'kg',
+    factor: 11.5, // kg CO2e per kg of aluminum
+    description: 'CO2 and PFC emissions from aluminum electrolysis',
+  },
+  {
+    id: 'glass-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Glass Manufacturing',
+    unit: 'kg',
+    factor: 0.53, // kg CO2e per kg of glass
+    description: 'CO2 from decomposition of carbonates in glass production',
+  },
+  {
+    id: 'chemical-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Chemical Production (Generic)',
+    unit: 'kg',
+    factor: 1.2, // kg CO2e per kg of product
+    description: 'Generic chemical manufacturing process emissions',
+  },
+  {
+    id: 'ethylene-production',
+    scope: 'Scope 1',
+    category: 'Process Emissions',
+    source: 'Ethylene Production',
+    unit: 'kg',
+    factor: 1.73, // kg CO2e per kg of ethylene
+    description: 'CO2 from steam cracking in ethylene production',
+  },
+
+  // ========================================
   // SCOPE 2 - PURCHASED ELECTRICITY
   // ========================================
   {

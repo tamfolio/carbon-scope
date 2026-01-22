@@ -1,39 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, X, Send, Globe } from "lucide-react";
+import { MessageCircle, X, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
 
 export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Array<{ text: string; sender: 'user' | 'bot' }>>([]);
   const [inputValue, setInputValue] = useState("");
-  const [language, setLanguage] = useState("en");
 
   const quickActions = [
     { label: "Start Fresh", action: "start_fresh" },
     { label: "Import Last Year", action: "import_last_year" },
     { label: "Talk to a Human", action: "talk_to_human" },
-  ];
-
-  const languages = [
-    { code: "en", label: "English" },
-    { code: "es", label: "Español" },
-    { code: "zh", label: "中文" },
-    { code: "sw", label: "Kiswahili" },
-    { code: "yo", label: "Yoruba" },
-    { code: "ig", label: "Igbo" },
-    { code: "ha", label: "Hausa" },
-    { code: "pcm", label: "Pidgin" },
   ];
 
   const handleQuickAction = (action: string) => {
@@ -99,23 +80,6 @@ export default function ChatAssistant() {
             >
               <X className="h-5 w-5" />
             </Button>
-          </div>
-
-          {/* Language Selector */}
-          <div className="p-3 border-b flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="w-full h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Messages Area */}

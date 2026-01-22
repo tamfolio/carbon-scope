@@ -336,9 +336,6 @@ export default function ReportsPage() {
     setEndDate(now.toISOString().split("T")[0]);
   };
 
-  const handleGenerateReport = () => {
-    fetchReportData();
-  };
 
   if (loading && !reportData) {
     return (
@@ -404,7 +401,7 @@ export default function ReportsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">
                   Report Template
@@ -462,15 +459,6 @@ export default function ReportsPage() {
                   onChange={(e) => setEndDate(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  onClick={handleGenerateReport}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  {loading ? "Generating..." : "Generate Report"}
-                </Button>
               </div>
             </div>
 

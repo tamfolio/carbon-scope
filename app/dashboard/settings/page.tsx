@@ -448,26 +448,6 @@ export default function SettingsPage() {
                 </form>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">2FA Status</p>
-                    <p className="text-sm text-muted-foreground">
-                      Two-factor authentication is currently disabled
-                    </p>
-                  </div>
-                  <Button variant="outline">Enable 2FA</Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Organization Tab */}
