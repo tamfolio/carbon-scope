@@ -315,7 +315,7 @@ export default function DashboardPage() {
               Welcome back{userData?.name ? `, ${userData.name.split(' ')[0]}` : ''}!
             </h2>
             <p className="text-muted-foreground mt-1">
-              Here's your carbon emissions overview for November 2025
+              Here's your carbon emissions overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -583,29 +583,34 @@ export default function DashboardPage() {
                     label: "Add Emission Data",
                     color:
                       "hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950 dark:hover:text-blue-300",
+                    onClick: () => router.push("/dashboard/emissions"),
                   },
                   {
                     icon: Download,
                     label: "Generate Report",
                     color:
                       "hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700 dark:hover:bg-purple-950 dark:hover:text-purple-300",
+                    onClick: () => router.push("/dashboard/reports"),
                   },
                   {
                     icon: Activity,
                     label: "View Analytics",
                     color:
                       "hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-950 dark:hover:text-cyan-300",
+                    onClick: () => router.push("/dashboard/analytics"),
                   },
                   {
                     icon: TrendingUp,
-                    label: "Set Goals",
+                    label: "Data Management",
                     color:
                       "hover:border-orange-500 hover:bg-orange-50 hover:text-orange-700 dark:hover:bg-orange-950 dark:hover:text-orange-300",
+                    onClick: () => router.push("/dashboard/data-management"),
                   },
                 ].map((action, index) => (
                   <Button
                     key={index}
                     variant="outline"
+                    onClick={action.onClick}
                     className={cn(
                       "h-28 flex flex-col items-center justify-center gap-3 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg",
                       action.color
