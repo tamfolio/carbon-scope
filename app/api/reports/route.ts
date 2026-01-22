@@ -118,28 +118,38 @@ export async function GET(request: Request) {
     });
 
     // Get emissions trend (monthly breakdown)
-    const emissionsTrend = await prisma.$queryRaw<Array<{
+    const emissionsTrendRaw = await prisma.$queryRaw<Array<{
       month: string;
-      scope1: number;
-      scope2: number;
-      scope3: number;
-      total: number;
-      count: number;
+      scope1: bigint;
+      scope2: bigint;
+      scope3: bigint;
+      total: bigint;
+      count: bigint;
     }>>`
       SELECT
-        strftime('%Y-%m', date) as month,
+        TO_CHAR(date, 'YYYY-MM') as month,
         COALESCE(SUM(CASE WHEN scope = 'Scope 1' THEN co2e ELSE 0 END), 0) as scope1,
         COALESCE(SUM(CASE WHEN scope = 'Scope 2' THEN co2e ELSE 0 END), 0) as scope2,
         COALESCE(SUM(CASE WHEN scope = 'Scope 3' THEN co2e ELSE 0 END), 0) as scope3,
         COALESCE(SUM(co2e), 0) as total,
         COUNT(*) as count
-      FROM Emission
-      WHERE organizationId = ${organizationId}
-        AND date >= ${startDate.toISOString()}
-        AND date <= ${endDate.toISOString()}
-      GROUP BY strftime('%Y-%m', date)
+      FROM "Emission"
+      WHERE "organizationId" = ${organizationId}
+        AND date >= ${startDate.toISOString()}::timestamp
+        AND date <= ${endDate.toISOString()}::timestamp
+      GROUP BY TO_CHAR(date, 'YYYY-MM')
       ORDER BY month ASC
     `;
+
+    // Convert BigInt to Number
+    const emissionsTrend = emissionsTrendRaw.map(row => ({
+      month: row.month,
+      scope1: Number(row.scope1),
+      scope2: Number(row.scope2),
+      scope3: Number(row.scope3),
+      total: Number(row.total),
+      count: Number(row.count),
+    }));
 
     // Get financed emissions summary (no date filter - use all financed emissions)
     const financedEmissionsTotal = await prisma.financedEmission.aggregate({
