@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
+    // Get user from database to ensure they exist
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const format = searchParams.get("format") || "csv";
     const scope = searchParams.get("scope");
@@ -22,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Build query
     const where: any = {
-      userId: decoded.userId,
+      userId: user.id,
     };
 
     if (scope && scope !== "all") {
