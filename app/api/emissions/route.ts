@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
         date: data.date,
         notes: data.notes || null,
         userId: user.id,
-        organizationId: data.organizationId || user.organizationId || null,
+        organizationId: user.organizationId || null,
       },
     });
 

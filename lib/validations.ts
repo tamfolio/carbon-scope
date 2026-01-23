@@ -39,8 +39,6 @@ export const EmissionInputSchema = z.object({
     .min(new Date('1900-01-01'), 'Date is too far in the past'),
 
   notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
-
-  organizationId: z.string().optional(),
 });
 
 export type EmissionInputType = z.infer<typeof EmissionInputSchema>;
@@ -174,7 +172,6 @@ export const ReportGenerationSchema = z.object({
   includeCharts: z.boolean().default(true),
   includeDetails: z.boolean().default(true),
   format: z.enum(['pdf', 'csv', 'excel']).default('pdf'),
-  organizationId: z.string().optional(),
 }).refine((data) => data.endDate >= data.startDate, {
   message: 'End date must be after or equal to start date',
   path: ['endDate'],
