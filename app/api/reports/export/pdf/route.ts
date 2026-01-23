@@ -3,6 +3,33 @@ import { requireOrganization, isErrorResponse } from "@/lib/apiHelpers";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+type ReportData = {
+  organization?: { name?: string };
+  summary?: {
+    reportingPeriod?: string;
+    grandTotalTonnes?: number;
+    totalCO2e?: number;
+    totalFinancedEmissionsTonnes?: number;
+    scope1?: number;
+    scope2?: number;
+    scope3?: number;
+    totalEntries?: number;
+  };
+  emissions?: {
+    byScope?: Array<{ scope?: string; total?: number; count?: number; percentage?: number }>;
+    byCategory?: Array<{ category?: string; scope?: string; total?: number; percentage?: number }>;
+    bySource?: Array<{ source?: string; total?: number; count?: number; percentage?: number }>;
+  };
+  financedEmissions?: {
+    summary?: { total?: number; scope1?: number; scope2?: number; scope3?: number; count?: number };
+    bySector?: Array<{ sector?: string; total?: number; investmentAmount?: number; count?: number }>;
+  };
+  compliance?: { completenessScore?: number; dataQualityScore?: number; totalDataPoints?: number };
+  users?: Array<{ userName?: string; role?: string; totalCo2e?: number; entriesCount?: number; financedEntriesCount?: number }>;
+};
+
+type AutoTableDoc = jsPDF & { lastAutoTable?: { finalY: number } };
+
 export async function GET(request: Request) {
   try {
     const authResult = await requireOrganization(request);
@@ -34,10 +61,10 @@ export async function GET(request: Request) {
       throw new Error("Failed to fetch report data");
     }
 
-    const reportData = await reportResponse.json();
+    const reportData = (await reportResponse.json()) as ReportData;
 
     // Create PDF document
-    const doc = new jsPDF();
+    const doc = new jsPDF() as AutoTableDoc;
     let yPosition = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -110,7 +137,7 @@ export async function GET(request: Request) {
       theme: "grid",
       headStyles: { fillColor: [37, 99, 235] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // Operations Emissions Breakdown
     checkNewPage(50);
@@ -131,7 +158,7 @@ export async function GET(request: Request) {
       theme: "striped",
       headStyles: { fillColor: [37, 99, 235] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // Template-specific compliance statement
     checkNewPage(40);
@@ -192,7 +219,7 @@ export async function GET(request: Request) {
     autoTable(doc, {
       startY: yPosition,
       head: [["Scope", "Total CO2e (kg)", "Count", "Percentage (%)"]],
-      body: (reportData.emissions?.byScope || []).map((item: any) => [
+      body: (reportData.emissions?.byScope || []).map((item) => [
         item.scope,
         (item.total || 0).toFixed(2),
         item.count,
@@ -201,7 +228,7 @@ export async function GET(request: Request) {
       theme: "striped",
       headStyles: { fillColor: [37, 99, 235] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // Emissions by Category Section
     checkNewPage(50);
@@ -215,7 +242,7 @@ export async function GET(request: Request) {
       head: [["Category", "Scope", "Total CO2e (kg)", "Percentage (%)"]],
       body: (reportData.emissions?.byCategory || [])
         .slice(0, 15) // Top 15 categories
-        .map((item: any) => [
+        .map((item) => [
           item.category,
           item.scope,
           (item.total || 0).toFixed(2),
@@ -224,7 +251,7 @@ export async function GET(request: Request) {
       theme: "striped",
       headStyles: { fillColor: [37, 99, 235] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // Top Emissions Sources Section
     checkNewPage(50);
@@ -236,7 +263,7 @@ export async function GET(request: Request) {
     autoTable(doc, {
       startY: yPosition,
       head: [["Source", "Total CO2e (kg)", "Count", "Percentage (%)"]],
-      body: (reportData.emissions?.bySource || []).map((item: any) => [
+      body: (reportData.emissions?.bySource || []).map((item) => [
         item.source,
         (item.total || 0).toFixed(2),
         item.count,
@@ -245,7 +272,7 @@ export async function GET(request: Request) {
       theme: "striped",
       headStyles: { fillColor: [37, 99, 235] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // Financed Emissions Section
     if (reportData.financedEmissions?.summary?.count > 0) {
@@ -268,7 +295,7 @@ export async function GET(request: Request) {
         theme: "grid",
         headStyles: { fillColor: [147, 51, 234] },
       });
-      yPosition = (doc as any).lastAutoTable.finalY + 15;
+      yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
       // Financed Emissions by Sector
       if (reportData.financedEmissions?.bySector?.length > 0) {
@@ -283,7 +310,7 @@ export async function GET(request: Request) {
           head: [["Sector", "Total CO2e (kg)", "Investment Amount", "Count"]],
           body: (reportData.financedEmissions.bySector || [])
             .slice(0, 10)
-            .map((item: any) => [
+            .map((item) => [
               item.sector,
               (item.total || 0).toFixed(2),
               (item.investmentAmount || 0).toFixed(2),
@@ -292,7 +319,7 @@ export async function GET(request: Request) {
           theme: "striped",
           headStyles: { fillColor: [147, 51, 234] },
         });
-        yPosition = (doc as any).lastAutoTable.finalY + 15;
+        yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
       }
     }
 
@@ -314,7 +341,7 @@ export async function GET(request: Request) {
       theme: "grid",
       headStyles: { fillColor: [34, 197, 94] },
     });
-    yPosition = (doc as any).lastAutoTable.finalY + 15;
+    yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
 
     // User Activity Section
     if (reportData.users && reportData.users.length > 0) {
@@ -329,7 +356,7 @@ export async function GET(request: Request) {
         head: [["User", "Role", "Total CO2e (kg)", "Entries"]],
         body: (reportData.users || [])
           .slice(0, 10)
-          .map((item: any) => [
+          .map((item) => [
             item.userName || "Unknown",
             item.role,
             (item.totalCo2e || 0).toFixed(2),
@@ -338,7 +365,7 @@ export async function GET(request: Request) {
         theme: "striped",
         headStyles: { fillColor: [37, 99, 235] },
       });
-      yPosition = (doc as any).lastAutoTable.finalY + 15;
+      yPosition = (doc.lastAutoTable?.finalY ?? yPosition) + 15;
     }
 
     // Footer on last page

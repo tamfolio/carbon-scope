@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { requireAdmin, isErrorResponse } from "@/lib/apiHelpers";
 import { prisma } from "@/lib/prisma";
 
+type ActivityLogWhereInput = {
+  organizationId?: string;
+  userId?: string;
+  action?: string;
+};
+
 export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin(request);
@@ -26,7 +32,7 @@ export async function GET(request: Request) {
       ? (organizationIdParam ? { organizationId: organizationIdParam } : {})
       : { organizationId: user.organizationId! };
 
-    const where: any = orgFilter;
+    const where: ActivityLogWhereInput = { ...orgFilter };
 
     if (userId) {
       where.userId = userId;
@@ -77,7 +83,7 @@ export async function GET(request: Request) {
 
     const activeUsers = await prisma.user.findMany({
       where: {
-        id: { in: activeUserIds.map(a => a.userId) },
+        id: { in: activeUserIds.map((a: { userId: string }) => a.userId) },
       },
       select: {
         id: true,
@@ -97,7 +103,7 @@ export async function GET(request: Request) {
         hasPrevious: page > 1,
       },
       filters: {
-        actionTypes: actionTypes.map(a => a.action),
+        actionTypes: actionTypes.map((a: { action: string }) => a.action),
         users: activeUsers,
       },
     });

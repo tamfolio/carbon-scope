@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Edit2, Power, PowerOff, Shield } from "lucide-react";
+import { Search, UserPlus, Edit2, Power, PowerOff } from "lucide-react";
 
 interface User {
   id: string;
@@ -81,25 +81,7 @@ export default function UsersManagement() {
   });
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    // Check if user is super admin
-    const userData = localStorage.getItem("cs_user");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setIsSuperAdmin(user.role === "SUPER_ADMIN");
-      } catch (e) {
-        console.error("Failed to parse user data");
-      }
-    }
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, roleFilter, statusFilter]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("cs_token");
       if (!token) {
@@ -129,9 +111,9 @@ export default function UsersManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
 
     if (searchTerm) {
@@ -153,7 +135,25 @@ export default function UsersManagement() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [roleFilter, searchTerm, statusFilter, users]);
+
+  useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch {
+        console.error("Failed to parse user data");
+      }
+    }
+    fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
 
   const handleInvite = async () => {
     if (!inviteForm.email) return;

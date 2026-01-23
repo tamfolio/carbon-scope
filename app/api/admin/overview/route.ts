@@ -130,7 +130,7 @@ export async function GET(request: Request) {
     });
 
     // Get user details for most active users
-    const userIds = mostActiveUsers.map(u => u.userId);
+    const userIds = mostActiveUsers.map((u: { userId: string }) => u.userId);
     const userDetails = await prisma.user.findMany({
       where: { id: { in: userIds } },
       select: {
@@ -141,13 +141,15 @@ export async function GET(request: Request) {
       },
     });
 
-    const mostActiveUsersWithDetails = mostActiveUsers.map(activity => {
-      const user = userDetails.find(u => u.id === activity.userId);
+    const mostActiveUsersWithDetails = mostActiveUsers.map(
+      (activity: { userId: string; _count: { id: number } }) => {
+        const user = userDetails.find((u: { id: string }) => u.id === activity.userId);
       return {
         user,
         activityCount: activity._count.id,
       };
-    });
+      }
+    );
 
     // Return overview data
     return NextResponse.json({

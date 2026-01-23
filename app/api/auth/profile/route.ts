@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { verifyToken, hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -120,7 +121,6 @@ export async function POST(request: Request) {
     }
 
     // Verify current password
-    const bcrypt = require("bcryptjs");
     const isValid = await bcrypt.compare(currentPassword, user.password);
 
     if (!isValid) {

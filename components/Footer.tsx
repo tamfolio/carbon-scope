@@ -1,15 +1,11 @@
 "use client";
 
 import { useTheme } from "./ThemeProvider";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Footer() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mounted] = useState(true);
 
   return (
     <footer

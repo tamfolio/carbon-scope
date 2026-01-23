@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireSuperAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { prisma } from "@/lib/prisma";
 
@@ -157,7 +158,7 @@ export async function PATCH(
     const currentCustomSettings = currentSettings.customSettings ? JSON.parse(currentSettings.customSettings) : {};
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Prisma.OrganizationSettingsUpdateInput = {};
 
     if (userLimit !== undefined) {
       updateData.userLimit = userLimit;

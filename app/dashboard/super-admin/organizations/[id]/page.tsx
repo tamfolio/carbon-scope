@@ -83,7 +83,7 @@ interface OrganizationSettings {
   enableAdvancedAnalytics: boolean;
   enableAPIAccess: boolean;
   enableCustomReports: boolean;
-  customSettings: any;
+  customSettings: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,7 +125,7 @@ interface ActivityLog {
   entityType: string;
   entityId: string;
   description: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
   user: {
     name: string | null;
@@ -236,10 +236,11 @@ export default function OrganizationDetailPage() {
       });
 
       // Calculate stats from emissionsByScope
-      const emissionsByScope = data.organization.emissionsByScope || [];
-      const scope1 = emissionsByScope.find((s: any) => s.scope === "Scope 1")?.total || 0;
-      const scope2 = emissionsByScope.find((s: any) => s.scope === "Scope 2")?.total || 0;
-      const scope3 = emissionsByScope.find((s: any) => s.scope === "Scope 3")?.total || 0;
+      const emissionsByScope: Array<{ scope: string; total: number }> =
+        data.organization.emissionsByScope || [];
+      const scope1 = emissionsByScope.find((s) => s.scope === "Scope 1")?.total || 0;
+      const scope2 = emissionsByScope.find((s) => s.scope === "Scope 2")?.total || 0;
+      const scope3 = emissionsByScope.find((s) => s.scope === "Scope 3")?.total || 0;
 
       setStats({
         totalUsers: data.organization._count.users,

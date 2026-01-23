@@ -89,7 +89,7 @@ export default function ChatAssistant() {
               <div className="space-y-3">
                 <div className="bg-card p-3 rounded-lg shadow-sm">
                   <p className="text-sm">
-                    👋 Hi! I'm your CarbonScope Assistant. How can I help you today?
+                    👋 Hi! I&apos;m your CarbonScope Assistant. How can I help you today?
                   </p>
                 </div>
 

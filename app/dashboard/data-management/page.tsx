@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
   Card,
@@ -38,7 +38,18 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { emissionCategories, emissionFactors } from "@/lib/emissionFactors";
+
+type EmissionRecord = {
+  id: string;
+  scope: string;
+  category: string;
+  source: string;
+  quantity: number;
+  date: string;
+  activity: string;
+  notes?: string | null;
+};
+import { emissionFactors } from "@/lib/emissionFactors";
 import { assessDataQuality } from "@/lib/activityHelpers";
 
 export default function DataManagementPage() {
@@ -88,18 +99,15 @@ export default function DataManagementPage() {
   >({});
 
   // State for emissions data
-  const [emissions, setEmissions] = useState<any[]>([]);
-  const [filteredEmissions, setFilteredEmissions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredEmissions, setFilteredEmissions] = useState<EmissionRecord[]>([]);
 
   // Load emissions on mount
   useEffect(() => {
     loadEmissions();
-  }, []);
+  }, [loadEmissions]);
 
   // Load emissions from API
-  const loadEmissions = async () => {
-    setLoading(true);
+  const loadEmissions = useCallback(async () => {
     try {
       const token = localStorage.getItem("cs_token");
       const response = await fetch("/api/emissions?limit=100", {
@@ -110,17 +118,14 @@ export default function DataManagementPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setEmissions(data.emissions);
         setFilteredEmissions(data.emissions);
       } else {
         showAlert("error", "Failed to load emissions data");
       }
     } catch {
       showAlert("error", "Failed to load emissions data");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   // Show alert
   const showAlert = (type: "success" | "error", message: string) => {
@@ -362,7 +367,7 @@ export default function DataManagementPage() {
 
   // Detect duplicates
   const detectDuplicates = () => {
-    const duplicates: { emission: any; matches: any[] }[] = [];
+    const duplicates: Array<{ emission: EmissionRecord; matches: EmissionRecord[] }> = [];
     const checked = new Set<string>();
 
     filteredEmissions.forEach((emission) => {

@@ -70,6 +70,18 @@ interface FinancedEmission {
   description: string;
 }
 
+type FinancedEmissionRecord = {
+  id: string;
+  investmentName: string;
+  companyName: string;
+  sector: string;
+  investmentAmount: number;
+  currency: string;
+  totalEmissions: number;
+  reportingYear: string;
+  dataQualityScore: number;
+};
+
 export default function FinancedEmissionsForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<FinancedEmission>({
@@ -101,7 +113,7 @@ export default function FinancedEmissionsForm() {
   } | null>(null);
 
   // State for emissions list
-  const [emissions, setEmissions] = useState<any[]>([]);
+  const [emissions, setEmissions] = useState<FinancedEmissionRecord[]>([]);
   const [loadingEmissions, setLoadingEmissions] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 

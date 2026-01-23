@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Activity, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ActivityLog {
   id: string;
@@ -66,21 +66,7 @@ export default function ActivityLogsPage() {
     hasPrevious: false,
   });
 
-  useEffect(() => {
-    // Check if user is super admin
-    const userData = localStorage.getItem("cs_user");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setIsSuperAdmin(user.role === "SUPER_ADMIN");
-      } catch (e) {
-        console.error("Failed to parse user data");
-      }
-    }
-    fetchActivityLogs();
-  }, [page, selectedUser, selectedAction]);
-
-  const fetchActivityLogs = async () => {
+  const fetchActivityLogs = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("cs_token");
@@ -126,7 +112,21 @@ export default function ActivityLogsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, selectedAction, selectedUser, router]);
+
+  useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch {
+        console.error("Failed to parse user data");
+      }
+    }
+    fetchActivityLogs();
+  }, [fetchActivityLogs]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();

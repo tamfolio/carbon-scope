@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate");
 
     // Build query
-    const where: any = {
+    const where: Prisma.EmissionWhereInput = {
       userId: user.id,
     };
 
@@ -101,9 +102,10 @@ export async function GET(request: NextRequest) {
         },
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to export data";
     console.error("Error exporting:", error);
-    return NextResponse.json({ error: error.message || "Failed to export data" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

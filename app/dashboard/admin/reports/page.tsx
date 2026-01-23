@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Download, Shield } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 
 export default function ReportsPage() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function ReportsPage() {
       try {
         const user = JSON.parse(userData);
         setIsSuperAdmin(user.role === "SUPER_ADMIN");
-      } catch (e) {
+      } catch {
         console.error("Failed to parse user data");
       }
     }

@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { aggregateEmissions } from '@/lib/calculationEngine';
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
     const daysBack = parseInt(searchParams.get('days') || '30');
 
     // Build base where clause (without date filter initially)
-    const baseWhere: any = {
+    const baseWhere: Prisma.EmissionWhereInput = {
       userId: user.id,
     };
 
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
     const startDate = actualStartDate > requestedStartDate ? actualStartDate : requestedStartDate;
 
     // Build where clause with date filter
-    const where: any = {
+    const where: Prisma.EmissionWhereInput = {
       ...baseWhere,
       date: {
         gte: startDate,

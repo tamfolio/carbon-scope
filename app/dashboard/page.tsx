@@ -52,6 +52,24 @@ interface EmissionsStats {
   };
 }
 
+interface RecentEmission {
+  id: string;
+  activity: string;
+  scope: string;
+  co2e: number;
+  createdAt: string | Date;
+}
+
+interface FinancedEmissionSummary {
+  id: string;
+  investmentName: string;
+  companyName: string;
+  sector: string;
+  totalEmissions: number;
+  investmentAmount: number;
+  currency: string;
+}
+
 interface MetricCardProps {
   title: string;
   value: string;
@@ -152,8 +170,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   // const [chartHeight, setChartHeight] = useState(300);
   const [stats, setStats] = useState<EmissionsStats | null>(null);
-  const [recentEmissions, setRecentEmissions] = useState<any[]>([]);
-  const [financedEmissions, setFinancedEmissions] = useState<any[]>([]);
+  const [recentEmissions, setRecentEmissions] = useState<RecentEmission[]>([]);
+  const [financedEmissions, setFinancedEmissions] = useState<FinancedEmissionSummary[]>([]);
   const [financedEmissionsTotal, setFinancedEmissionsTotal] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState<"7" | "30" | "180">(
     "30"
@@ -278,7 +296,7 @@ export default function DashboardPage() {
         setFinancedEmissions(financedData.financedEmissions || []);
         // Calculate total financed emissions
         const total = (financedData.financedEmissions || []).reduce(
-          (sum: number, item: any) => sum + (item.totalEmissions || 0),
+          (sum: number, item: FinancedEmissionSummary) => sum + (item.totalEmissions || 0),
           0
         );
         setFinancedEmissionsTotal(total);
@@ -315,7 +333,7 @@ export default function DashboardPage() {
               Welcome back{userData?.name ? `, ${userData.name.split(' ')[0]}` : ''}!
             </h2>
             <p className="text-muted-foreground mt-1">
-              Here's your carbon emissions overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              Here&apos;s your carbon emissions overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -433,7 +451,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {financedEmissions.slice(0, 5).map((emission: any, index: number) => (
+                  {financedEmissions.slice(0, 5).map((emission, index: number) => (
                     <div
                       key={emission.id}
                       className="flex items-center justify-between p-3 rounded-lg hover:bg-accent transition-all duration-300 cursor-pointer group animate-fade-in-right"
@@ -503,7 +521,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-4">
                   {recentEmissions && recentEmissions.length > 0 ? (
-                    recentEmissions.map((emission: any, index: number) => {
+                    recentEmissions.map((emission, index: number) => {
                       const daysAgo = Math.floor(
                         (new Date().getTime() -
                           new Date(emission.createdAt).getTime()) /

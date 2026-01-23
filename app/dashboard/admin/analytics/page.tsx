@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, Shield } from "lucide-react";
 
 interface AnalyticsData {
   period: string;
@@ -77,21 +76,7 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  useEffect(() => {
-    // Check if user is super admin
-    const userData = localStorage.getItem("cs_user");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setIsSuperAdmin(user.role === "SUPER_ADMIN");
-      } catch (e) {
-        console.error("Failed to parse user data");
-      }
-    }
-    fetchAnalytics();
-  }, [period]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("cs_token");
@@ -122,7 +107,21 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, router]);
+
+  useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch {
+        console.error("Failed to parse user data");
+      }
+    }
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(Math.round(num));

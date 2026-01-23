@@ -32,17 +32,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [activeTab, setActiveTab] = useState<"testimonials" | "case-studies">("testimonials");
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   const features = [
     {
       icon: Zap,
@@ -427,7 +424,7 @@ export default function Home() {
                 Solutions for Every Organization
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Whether you're measuring your own emissions or managing climate risk across portfolios, we have the right solution for your needs.
+                Whether you&apos;re measuring your own emissions or managing climate risk across portfolios, we have the right solution for your needs.
               </p>
             </div>
 
@@ -567,7 +564,7 @@ export default function Home() {
                 </h2>
                 <p className="text-lg text-muted-foreground">
                   CarbonScope 360 provides everything you need to manage, track,
-                  and reduce your organization's carbon footprint with
+                  and reduce your organization&apos;s carbon footprint with
                   confidence and accuracy.
                 </p>
                 <div className="grid gap-3">
@@ -675,7 +672,7 @@ export default function Home() {
 
                         {/* Quote */}
                         <p className="text-xl md:text-2xl italic text-foreground font-light leading-relaxed max-w-3xl">
-                          "{testimonials[currentTestimonial].quote}"
+                          &ldquo;{testimonials[currentTestimonial].quote}&rdquo;
                         </p>
 
                         {/* Author Info */}
@@ -747,7 +744,9 @@ export default function Home() {
                             <span key={i} className="text-yellow-500 text-sm">★</span>
                           ))}
                         </div>
-                        <p className="text-sm italic mb-4 text-muted-foreground line-clamp-3">"{testimonial.quote}"</p>
+                        <p className="text-sm italic mb-4 text-muted-foreground line-clamp-3">
+                          &ldquo;{testimonial.quote}&rdquo;
+                        </p>
                         <div className="pt-3 border-t border-border/40">
                           <p className="font-semibold text-sm text-foreground">{testimonial.name}</p>
                           <p className="text-xs text-muted-foreground">{testimonial.role}</p>

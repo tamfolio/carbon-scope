@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     // Calculate date range based on period
     const now = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
 
     switch (period) {
       case "week":
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     });
 
     // Get user details for top contributors
-    const userIds = emissionsByUser.map(e => e.userId);
+    const userIds = emissionsByUser.map((e: { userId: string }) => e.userId);
     const users = await prisma.user.findMany({
       where: { id: { in: userIds } },
       select: {
@@ -72,15 +72,21 @@ export async function GET(request: Request) {
       },
     });
 
-    const topContributors = emissionsByUser.map(emission => {
-      const user = users.find(u => u.id === emission.userId);
+    const topContributors = emissionsByUser.map(
+      (emission: {
+        userId: string;
+        _sum: { co2e: number | null };
+        _count: { id: number };
+      }) => {
+        const user = users.find((u: { id: string }) => u.id === emission.userId);
       return {
         user,
         totalCo2e: emission._sum.co2e || 0,
         entryCount: emission._count.id,
         averageCo2e: (emission._sum.co2e || 0) / emission._count.id,
       };
-    });
+      }
+    );
 
     // Get emissions by category
     const emissionsByCategory = await prisma.emission.groupBy({
@@ -212,7 +218,14 @@ export async function GET(request: Request) {
     });
 
     // Get emissions sum for each user
-    const userEmissionsPromises = userPerformance.map(async (u) => {
+    const userEmissionsPromises = userPerformance.map(
+      async (u: {
+        id: string;
+        name: string | null;
+        email: string;
+        role: string;
+        _count: { emissions: number; financedEmissions: number };
+      }) => {
       const emissionsSum = await prisma.emission.aggregate({
         where: {
           userId: u.id,
@@ -235,7 +248,8 @@ export async function GET(request: Request) {
         financedEntriesCount: u._count.financedEmissions,
         averageCo2e: u._count.emissions > 0 ? (emissionsSum._sum.co2e || 0) / u._count.emissions : 0,
       };
-    });
+      }
+    );
 
     const userComparison = await Promise.all(userEmissionsPromises);
 
@@ -284,39 +298,71 @@ export async function GET(request: Request) {
         grandTotalTonnes: grandTotalKg, // Name kept for compatibility, but value is in kg
       },
       topContributors,
-      emissionsByCategory: emissionsByCategory.map(e => ({
-        category: e.category,
-        total: e._sum.co2e || 0,
-        count: e._count.id,
-        percentage: totalEmissions._sum.co2e
-          ? ((e._sum.co2e || 0) / totalEmissions._sum.co2e) * 100
-          : 0,
-      })),
-      emissionsByScope: emissionsByScope.map(e => ({
-        scope: e.scope,
-        total: e._sum.co2e || 0,
-        count: e._count.id,
-        percentage: totalEmissions._sum.co2e
-          ? ((e._sum.co2e || 0) / totalEmissions._sum.co2e) * 100
-          : 0,
-      })),
+      emissionsByCategory: emissionsByCategory.map(
+        (e: {
+          category: string;
+          _sum: { co2e: number | null };
+          _count: { id: number };
+        }) => ({
+          category: e.category,
+          total: e._sum.co2e || 0,
+          count: e._count.id,
+          percentage: totalEmissions._sum.co2e
+            ? ((e._sum.co2e || 0) / totalEmissions._sum.co2e) * 100
+            : 0,
+        })
+      ),
+      emissionsByScope: emissionsByScope.map(
+        (e: {
+          scope: string;
+          _sum: { co2e: number | null };
+          _count: { id: number };
+        }) => ({
+          scope: e.scope,
+          total: e._sum.co2e || 0,
+          count: e._count.id,
+          percentage: totalEmissions._sum.co2e
+            ? ((e._sum.co2e || 0) / totalEmissions._sum.co2e) * 100
+            : 0,
+        })
+      ),
       emissionsTrend,
       financedEmissions: {
-        bySector: financedEmissionsBySector.map(e => ({
-          sector: e.sector,
-          total: e._sum.totalEmissions || 0,
-          scope1: e._sum.scope1 || 0,
-          scope2: e._sum.scope2 || 0,
-          scope3: e._sum.scope3 || 0,
-          count: e._count.id,
-        })),
-        byCountry: financedEmissionsByCountry.map(e => ({
-          country: e.country,
-          total: e._sum.totalEmissions || 0,
-          count: e._count.id,
-        })),
+        bySector: financedEmissionsBySector.map(
+          (e: {
+            sector: string;
+            _sum: {
+              totalEmissions: number | null;
+              scope1: number | null;
+              scope2: number | null;
+              scope3: number | null;
+            };
+            _count: { id: number };
+          }) => ({
+            sector: e.sector,
+            total: e._sum.totalEmissions || 0,
+            scope1: e._sum.scope1 || 0,
+            scope2: e._sum.scope2 || 0,
+            scope3: e._sum.scope3 || 0,
+            count: e._count.id,
+          })
+        ),
+        byCountry: financedEmissionsByCountry.map(
+          (e: {
+            country: string;
+            _sum: { totalEmissions: number | null };
+            _count: { id: number };
+          }) => ({
+            country: e.country,
+            total: e._sum.totalEmissions || 0,
+            count: e._count.id,
+          })
+        ),
       },
-      userComparison: userComparison.sort((a, b) => b.totalCo2e - a.totalCo2e),
+      userComparison: userComparison.sort(
+        (a: { totalCo2e: number }, b: { totalCo2e: number }) =>
+          b.totalCo2e - a.totalCo2e
+      ),
     });
   } catch (error) {
     console.error("Error fetching analytics:", error);

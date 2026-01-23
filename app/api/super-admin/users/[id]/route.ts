@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireSuperAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { prisma } from "@/lib/prisma";
 
@@ -151,7 +152,7 @@ export async function PATCH(
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (role !== undefined) updateData.role = role;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (name !== undefined) updateData.name = name;

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { requireAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { prisma } from "@/lib/prisma";
 
+type UserUpdateData = {
+  role?: string;
+  isActive?: boolean;
+  name?: string | null;
+};
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -143,7 +149,7 @@ export async function PATCH(
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: UserUpdateData = {};
     if (role !== undefined) updateData.role = role;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (name !== undefined) updateData.name = name;

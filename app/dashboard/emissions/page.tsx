@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -49,7 +49,7 @@ import {
   type EmissionFactor,
   type CategoryInfo,
 } from "@/lib/emissionFactors";
-import { getSourcesForCategory, assessDataQuality } from "@/lib/activityHelpers";
+import { getSourcesForCategory } from "@/lib/activityHelpers";
 import { calculateEmissions, formatCO2e } from "@/lib/calculationEngine";
 import { cn } from "@/lib/utils";
 import FinancedEmissionsForm from "@/components/FinancedEmissionsForm";
@@ -121,49 +121,14 @@ function EmissionsPageContent() {
     []
   );
 
-  // State for bulk import
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPreview, setImportPreview] = useState<
-    Array<{
-      scope: string;
-      category: string;
-      activity: string;
-      source: string;
-      quantity: number;
-      unit: string;
-      date: string;
-      notes?: string;
-    }>
-  >([]);
-  const [importErrors, setImportErrors] = useState<
-    Array<{ row: number; message: string }>
-  >([]);
-  const [importing, setImporting] = useState(false);
-  const [importHistory, setImportHistory] = useState<
-    Array<{ filename: string; records: number; date: string; status: string }>
-  >([]);
-
   // State for batch operations
   const [selectedEmissions, setSelectedEmissions] = useState<string[]>([]);
   const [batchMode, setBatchMode] = useState(false);
 
-  // State for data quality
-  const [qualityScores, setQualityScores] = useState<
-    Record<
-      string,
-      {
-        score: number;
-        level: string;
-        issues: string[];
-        recommendations: string[];
-      }
-    >
-  >({});
-
   // Load emissions on mount
   useEffect(() => {
     loadEmissions();
-  }, []);
+  }, [loadEmissions]);
 
   // Handle tab query parameter
   useEffect(() => {
@@ -216,7 +181,7 @@ function EmissionsPageContent() {
           emissionFactorId,
         });
         setPreviewCO2e(result.co2e);
-      } catch (error) {
+      } catch {
         setPreviewCO2e(null);
       }
     } else {
@@ -252,7 +217,7 @@ function EmissionsPageContent() {
   }, [searchTerm, filterScope, filterCategory, emissions]);
 
   // Load emissions from API
-  const loadEmissions = async () => {
+  const loadEmissions = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("cs_token");
@@ -274,7 +239,7 @@ function EmissionsPageContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showAlert]);
 
   // Reset form
   const resetForm = () => {
@@ -294,10 +259,13 @@ function EmissionsPageContent() {
   };
 
   // Show alert
-  const showAlert = (type: "success" | "error", message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  };
+  const showAlert = useCallback(
+    (type: "success" | "error", message: string) => {
+      setAlert({ type, message });
+      setTimeout(() => setAlert(null), 5000);
+    },
+    []
+  );
 
   // Validate form
   const validateForm = (): boolean => {
@@ -450,126 +418,6 @@ function EmissionsPageContent() {
     }
   };
 
-  // Handle file selection for bulk import
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImportFile(file);
-    setImportPreview([]);
-    setImportErrors([]);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const token = localStorage.getItem("cs_token");
-      const response = await fetch("/api/emissions/import/preview", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setImportPreview(data.preview || []);
-        setImportErrors(data.errors || []);
-      } else {
-        const error = await response.json();
-        showAlert("error", error.error || "Failed to parse file");
-      }
-    } catch (error) {
-      console.error("Error parsing file:", error);
-      showAlert("error", "Failed to parse file. Please check the format.");
-    }
-  };
-
-  // Handle bulk import
-  const handleBulkImport = async () => {
-    if (!importFile || importPreview.length === 0 || importErrors.length > 0) {
-      return;
-    }
-
-    setImporting(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", importFile);
-
-      const token = localStorage.getItem("cs_token");
-      const response = await fetch("/api/emissions/import", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        showAlert(
-          "success",
-          `Successfully imported ${
-            data.imported || importPreview.length
-          } records`
-        );
-
-        // Add to import history
-        setImportHistory([
-          {
-            filename: importFile.name,
-            records: data.imported || importPreview.length,
-            date: new Date().toISOString(),
-            status: "success",
-          },
-          ...importHistory,
-        ]);
-
-        // Reset import state
-        setImportFile(null);
-        setImportPreview([]);
-        setImportErrors([]);
-
-        // Reload emissions
-        loadEmissions();
-      } else {
-        const error = await response.json();
-        showAlert("error", error.error || "Failed to import records");
-      }
-    } catch (error) {
-      console.error("Error importing:", error);
-      showAlert("error", "Failed to import records");
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  // Download template
-  const downloadTemplate = () => {
-    const headers = [
-      "scope",
-      "category",
-      "activity",
-      "source",
-      "quantity",
-      "unit",
-      "emissionFactorId",
-      "date",
-      "notes",
-    ];
-    const csvContent = headers.join(",") + "\n";
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "emissions_import_template.csv");
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   // Handle export
   const handleExport = async () => {
     try {
@@ -599,120 +447,6 @@ function EmissionsPageContent() {
     } catch (error) {
       console.error("Error exporting:", error);
       showAlert("error", "Failed to export data");
-    }
-  };
-
-  // Assess all data quality
-  const assessAllDataQuality = () => {
-    const scores: Record<
-      string,
-      {
-        score: number;
-        level: string;
-        issues: string[];
-        recommendations: string[];
-      }
-    > = {};
-    filteredEmissions.forEach((emission) => {
-      const factor = emissionFactors.find(
-        (f) =>
-          f.scope === emission.scope &&
-          f.category === emission.category &&
-          f.source === emission.source
-      );
-      if (factor) {
-        const quality = assessDataQuality({
-          quantity: emission.quantity,
-          emissionFactorId: factor.id,
-          date: new Date(emission.date),
-          activity: emission.activity,
-          notes: emission.notes,
-        });
-        scores[emission.id] = quality;
-      }
-    });
-    setQualityScores(scores);
-    showAlert("success", "Data quality assessment completed");
-  };
-
-  // Handle batch delete
-  const handleBatchDelete = async () => {
-    if (selectedEmissions.length === 0) return;
-    if (
-      !confirm(
-        `Are you sure you want to delete ${selectedEmissions.length} record(s)?`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("cs_token");
-      let successCount = 0;
-      let failCount = 0;
-
-      for (const id of selectedEmissions) {
-        const response = await fetch(`/api/emissions/${id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          successCount++;
-        } else {
-          failCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        showAlert("success", `Successfully deleted ${successCount} record(s)`);
-        setSelectedEmissions([]);
-        setBatchMode(false);
-        loadEmissions();
-        // Dispatch event to notify other components (like dashboard)
-        window.dispatchEvent(new CustomEvent("emissionsUpdated"));
-      }
-      if (failCount > 0) {
-        showAlert("error", `Failed to delete ${failCount} record(s)`);
-      }
-    } catch (error) {
-      console.error("Error in batch delete:", error);
-      showAlert("error", "Failed to delete records");
-    }
-  };
-
-  // Detect duplicates
-  const detectDuplicates = () => {
-    const duplicates: { emission: Emission; matches: Emission[] }[] = [];
-    const checked = new Set<string>();
-
-    filteredEmissions.forEach((emission) => {
-      if (checked.has(emission.id)) return;
-
-      const matches = filteredEmissions.filter(
-        (e) =>
-          e.id !== emission.id &&
-          e.scope === emission.scope &&
-          e.category === emission.category &&
-          e.source === emission.source &&
-          Math.abs(e.quantity - emission.quantity) < 0.01 &&
-          new Date(e.date).getTime() === new Date(emission.date).getTime()
-      );
-
-      if (matches.length > 0) {
-        duplicates.push({ emission, matches });
-        checked.add(emission.id);
-        matches.forEach((m) => checked.add(m.id));
-      }
-    });
-
-    if (duplicates.length > 0) {
-      const message = `Found ${duplicates.length} potential duplicate(s). Check the console for details.`;
-      showAlert("error", message);
-      console.log("Duplicates found:", duplicates);
-    } else {
-      showAlert("success", "No duplicates found");
     }
   };
 

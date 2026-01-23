@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -14,8 +14,7 @@ import {
   TrendingDown,
   FileText,
   BarChart3,
-  AlertCircle,
-  Shield
+  AlertCircle
 } from "lucide-react";
 
 interface OverviewData {
@@ -66,21 +65,7 @@ export default function AdminDashboard() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  useEffect(() => {
-    // Check if user is super admin
-    const userData = localStorage.getItem("cs_user");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setIsSuperAdmin(user.role === "SUPER_ADMIN");
-      } catch (e) {
-        console.error("Failed to parse user data");
-      }
-    }
-    fetchOverview();
-  }, []);
-
-  const fetchOverview = async () => {
+  const fetchOverview = useCallback(async () => {
     try {
       const token = localStorage.getItem("cs_token");
       if (!token) {
@@ -111,7 +96,21 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    // Check if user is super admin
+    const userData = localStorage.getItem("cs_user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setIsSuperAdmin(user.role === "SUPER_ADMIN");
+      } catch {
+        console.error("Failed to parse user data");
+      }
+    }
+    fetchOverview();
+  }, [fetchOverview]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();

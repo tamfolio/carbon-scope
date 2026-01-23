@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireSuperAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { hashPassword, generateTemporaryPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "50");
 
     // Build where clause
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     }
 
     // Determine sort field and order
-    const orderBy: any = {};
+    const orderBy: Prisma.UserOrderByWithRelationInput = {};
     if (["name", "email", "createdAt", "lastLoginAt"].includes(sortBy)) {
       orderBy[sortBy] = sortOrder === "asc" ? "asc" : "desc";
     } else {

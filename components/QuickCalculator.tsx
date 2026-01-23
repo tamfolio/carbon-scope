@@ -58,7 +58,7 @@ export default function QuickCalculator() {
             Quick Emissions Calculator
           </DialogTitle>
           <DialogDescription>
-            Get an instant estimate of your company's monthly carbon footprint
+            Get an instant estimate of your company&apos;s monthly carbon footprint
           </DialogDescription>
         </DialogHeader>
 

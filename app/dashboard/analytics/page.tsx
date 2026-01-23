@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -90,7 +90,6 @@ interface MetricCardProps {
   change: number;
   icon: React.ElementType;
   color: string;
-  bgColor: string;
   delay: number;
   progress?: number;
 }
@@ -101,7 +100,6 @@ function MetricCard({
   unit,
   icon: Icon,
   color,
-  bgColor,
   delay,
   progress: actualProgress = 0,
 }: MetricCardProps) {
@@ -170,7 +168,6 @@ export default function AnalyticsPage() {
   const [emissionsType, setEmissionsType] = useState<"operations" | "financed">("operations");
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
   const [customDateRange, setCustomDateRange] = useState<{ start: string; end: string } | null>(null);
-  const [comparisonData, setComparisonData] = useState<any>(null);
   const [drillDownCategory, setDrillDownCategory] = useState<string | null>(null);
   const [drillDownSource, setDrillDownSource] = useState<string | null>(null);
   const [drillDownData, setDrillDownData] = useState<{ monthlyData: Array<{ month: string; total: number }> } | null>(null);
@@ -187,25 +184,7 @@ export default function AnalyticsPage() {
     }
   }, [selectedPeriod]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("cs_token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    loadAnalyticsData(token);
-  }, [router]);
-
-  // Reload data when period or emissions type changes
-  useEffect(() => {
-    const token = localStorage.getItem("cs_token");
-    if (token && !loading) {
-      setLoading(true);
-      loadAnalyticsData(token);
-    }
-  }, [selectedPeriod, periodType, emissionsType]);
-
-  const loadAnalyticsData = async (token: string) => {
+  const loadAnalyticsData = useCallback(async (token: string) => {
     try {
       // Determine which API endpoint to use based on emissions type
       const apiEndpoint = emissionsType === "operations"
@@ -228,7 +207,17 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [emissionsType, periodType, selectedPeriod]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("cs_token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setLoading(true);
+    loadAnalyticsData(token);
+  }, [loadAnalyticsData, router]);
 
   const loadDrillDownData = async (category?: string, source?: string) => {
     setLoadingDrillDown(true);
@@ -315,7 +304,11 @@ export default function AnalyticsPage() {
 
           {/* Operations/Financed Emissions Toggle */}
           <div className="flex items-center gap-4">
-            <Tabs value={emissionsType} onValueChange={(value: any) => setEmissionsType(value)} className="w-auto">
+            <Tabs
+              value={emissionsType}
+              onValueChange={(value: "operations" | "financed") => setEmissionsType(value)}
+              className="w-auto"
+            >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="operations">
                   Operations Emissions
@@ -972,7 +965,6 @@ export default function AnalyticsPage() {
                   change={0}
                   icon={Cloud}
                   color="border-primary"
-                  bgColor=""
                   delay={0}
                   progress={totalProgress}
                 />
@@ -983,7 +975,6 @@ export default function AnalyticsPage() {
                   change={0}
                   icon={Factory}
                   color="border-blue-500"
-                  bgColor=""
                   delay={100}
                   progress={scope1Progress}
                 />
@@ -994,7 +985,6 @@ export default function AnalyticsPage() {
                   change={0}
                   icon={Zap}
                   color="border-yellow-500"
-                  bgColor=""
                   delay={200}
                   progress={scope2Progress}
                 />
@@ -1005,7 +995,6 @@ export default function AnalyticsPage() {
                   change={0}
                   icon={Truck}
                   color="border-purple-500"
-                  bgColor=""
                   delay={300}
                   progress={scope3Progress}
                 />

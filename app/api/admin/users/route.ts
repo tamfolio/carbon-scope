@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { hashPassword, generateTemporaryPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -20,7 +21,9 @@ export async function GET(request: Request) {
     const status = searchParams.get("status") || "";
 
     // Build where clause
-    const where: any = isSuperAdmin ? {} : { organizationId: user.organizationId! };
+    const where: Prisma.UserWhereInput = isSuperAdmin
+      ? {}
+      : { organizationId: user.organizationId! };
 
     if (search) {
       where.OR = [

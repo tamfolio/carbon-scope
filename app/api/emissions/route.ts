@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { EmissionInputSchema, EmissionFilterSchema, formatZodErrors } from '@/lib/validations';
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     const filters = validation.data;
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.EmissionWhereInput = {
       userId: user.id,
     };
 

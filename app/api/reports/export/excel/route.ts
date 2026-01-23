@@ -2,6 +2,40 @@ import { NextResponse } from "next/server";
 import { requireOrganization, isErrorResponse } from "@/lib/apiHelpers";
 import * as XLSX from "xlsx";
 
+type ReportData = {
+  organization?: { name?: string };
+  summary?: {
+    reportingPeriod?: string;
+    grandTotalKg?: number;
+    grandTotalTonnes?: number;
+    totalCO2e?: number;
+    scope1?: number;
+    scope2?: number;
+    scope3?: number;
+    totalFinancedEmissionsTonnes?: number;
+    totalFinancedEmissionsKg?: number;
+    totalEntries?: number;
+  };
+  compliance?: {
+    completenessScore?: number;
+    dataQualityScore?: number;
+  };
+  emissions?: {
+    byScope?: Array<{ scope?: string; total?: number; count?: number; percentage?: number }>;
+    byCategory?: Array<{ category?: string; scope?: string; total?: number; count?: number; percentage?: number }>;
+    bySource?: Array<{ source?: string; total?: number; count?: number; percentage?: number }>;
+    trend?: Array<{ month?: string; scope1?: number; scope2?: number; scope3?: number; total?: number; count?: number }>;
+  };
+  financedEmissions?: {
+    summary?: { total?: number; scope1?: number; scope2?: number; scope3?: number; count?: number };
+    bySector?: Array<{ sector?: string; total?: number; scope1?: number; scope2?: number; scope3?: number; investmentAmount?: number; count?: number }>;
+    byType?: Array<{ type?: string; total?: number; investmentAmount?: number; count?: number }>;
+    dataQuality?: Array<{ score?: number; count?: number }>;
+  };
+  users?: Array<{ userName?: string; userEmail?: string; role?: string; totalCo2e?: number; entriesCount?: number; financedEntriesCount?: number }>;
+  waste?: { totalWaste?: number; categories?: Array<{ category?: string; total?: number; count?: number }> };
+};
+
 export async function GET(request: Request) {
   try {
     const authResult = await requireOrganization(request);
@@ -33,7 +67,7 @@ export async function GET(request: Request) {
       throw new Error("Failed to fetch report data");
     }
 
-    const reportData = await reportResponse.json();
+    const reportData = (await reportResponse.json()) as ReportData;
 
     // Get template name
     const templateNames: Record<string, string> = {
@@ -87,7 +121,7 @@ export async function GET(request: Request) {
     const scopeData = [
       ["Emissions by Scope"],
       ["Scope", "Total CO2e (kg)", "Count", "Percentage (%)"],
-      ...(reportData.emissions?.byScope || []).map((item: any) => [
+      ...(reportData.emissions?.byScope || []).map((item) => [
         item.scope,
         item.total?.toFixed(2) || "0",
         item.count,
@@ -101,7 +135,7 @@ export async function GET(request: Request) {
     const categoryData = [
       ["Emissions by Category"],
       ["Category", "Scope", "Total CO2e (kg)", "Count", "Percentage (%)"],
-      ...(reportData.emissions?.byCategory || []).map((item: any) => [
+      ...(reportData.emissions?.byCategory || []).map((item) => [
         item.category,
         item.scope,
         item.total?.toFixed(2) || "0",
@@ -116,7 +150,7 @@ export async function GET(request: Request) {
     const sourceData = [
       ["Top Emissions Sources"],
       ["Source", "Total CO2e (kg)", "Count", "Percentage (%)"],
-      ...(reportData.emissions?.bySource || []).map((item: any) => [
+      ...(reportData.emissions?.bySource || []).map((item) => [
         item.source,
         item.total?.toFixed(2) || "0",
         item.count,
@@ -130,7 +164,7 @@ export async function GET(request: Request) {
     const trendData = [
       ["Emissions Trend Over Time"],
       ["Month", "Scope 1 (kg)", "Scope 2 (kg)", "Scope 3 (kg)", "Total (kg)", "Count"],
-      ...(reportData.emissions?.trend || []).map((item: any) => [
+      ...(reportData.emissions?.trend || []).map((item) => [
         item.month,
         Number(item.scope1)?.toFixed(2) || "0",
         Number(item.scope2)?.toFixed(2) || "0",
@@ -156,7 +190,7 @@ export async function GET(request: Request) {
       [],
       ["By Sector"],
       ["Sector", "Total CO2e (kg)", "Scope 1", "Scope 2", "Scope 3", "Investment Amount", "Count"],
-      ...(reportData.financedEmissions?.bySector || []).map((item: any) => [
+      ...(reportData.financedEmissions?.bySector || []).map((item) => [
         item.sector,
         item.total?.toFixed(2) || "0",
         item.scope1?.toFixed(2) || "0",
@@ -173,7 +207,7 @@ export async function GET(request: Request) {
     const financedTypeData = [
       ["Financed Emissions by Investment Type"],
       ["Investment Type", "Total CO2e (kg)", "Investment Amount", "Count"],
-      ...(reportData.financedEmissions?.byType || []).map((item: any) => [
+      ...(reportData.financedEmissions?.byType || []).map((item) => [
         item.type,
         item.total?.toFixed(2) || "0",
         item.investmentAmount?.toFixed(2) || "0",
@@ -187,7 +221,7 @@ export async function GET(request: Request) {
     const userData = [
       ["User Activity Summary"],
       ["User Name", "Email", "Role", "Total CO2e (kg)", "Entries", "Financed Entries"],
-      ...(reportData.users || []).map((item: any) => [
+      ...(reportData.users || []).map((item) => [
         item.userName,
         item.userEmail,
         item.role,
@@ -206,7 +240,7 @@ export async function GET(request: Request) {
         ["Total Waste Emissions", reportData.waste.totalWaste?.toFixed(2) || "0", "kg CO2e"],
         [],
         ["Category", "Total CO2e (kg)", "Count"],
-        ...(reportData.waste.categories || []).map((item: any) => [
+        ...(reportData.waste.categories || []).map((item) => [
           item.category,
           item.total?.toFixed(2) || "0",
           item.count,
@@ -220,7 +254,7 @@ export async function GET(request: Request) {
     const dataQualityData = [
       ["Data Quality Metrics (PCAF Scores)"],
       ["PCAF Score", "Count", "Description"],
-      ...(reportData.financedEmissions?.dataQuality || []).map((item: any) => {
+      ...(reportData.financedEmissions?.dataQuality || []).map((item) => {
         let description = "";
         switch (item.score) {
           case 1:

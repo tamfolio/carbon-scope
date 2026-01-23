@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { z } from "zod";
 import { verifyToken } from "@/lib/auth";
 import { EmissionInputSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { calculateEmissions } from "@/lib/calculationEngine";
+
+type EmissionInput = z.infer<typeof EmissionInputSchema>;
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,14 +46,14 @@ export async function POST(request: NextRequest) {
 
     // Parse CSV
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-    const records: any[] = [];
-    const errors: any[] = [];
+    const records: EmissionInput[] = [];
+    const errors: Array<{ row: number; message: string }> = [];
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map((v) => v.trim());
       if (values.length === 0 || values.every((v) => !v)) continue;
 
-      const record: any = {};
+      const record: Record<string, string> = {};
       headers.forEach((header, idx) => {
         record[header] = values[idx] || "";
       });
@@ -70,10 +73,18 @@ export async function POST(request: NextRequest) {
         });
 
         records.push(validated);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error &&
+          typeof error === "object" &&
+          "errors" in error &&
+          Array.isArray((error as { errors?: Array<{ message?: string }> }).errors) &&
+          (error as { errors: Array<{ message?: string }> }).errors[0]?.message
+            ? (error as { errors: Array<{ message?: string }> }).errors[0]?.message
+            : "Validation error";
         errors.push({
           row: i + 1,
-          message: error.errors?.[0]?.message || "Validation error",
+          message,
         });
       }
     }
@@ -115,9 +126,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ imported, total: records.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error importing file:", error);
-    return NextResponse.json({ error: error.message || "Failed to import file" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to import file";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

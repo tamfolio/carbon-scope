@@ -2,6 +2,74 @@ import { NextResponse } from "next/server";
 import { requireAdmin, isErrorResponse, createActivityLog } from "@/lib/apiHelpers";
 import { prisma } from "@/lib/prisma";
 
+type EmissionWithUser = {
+  id: string;
+  scope: string;
+  category: string;
+  activity: string;
+  source: string;
+  quantity: number;
+  unit: string;
+  emissionFactor: number;
+  co2e: number;
+  date: Date;
+  notes: string | null;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+};
+
+type UserWithCounts = {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  isActive: boolean;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+  _count: {
+    emissions: number;
+    financedEmissions: number;
+    activityLogs: number;
+  };
+};
+
+type UserWithStats = UserWithCounts & { totalCo2e: number };
+
+type ActivityLogWithUser = {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  description: string;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+  } | null;
+};
+
+type ComplianceReport = {
+  organization: { name: string } | null;
+  period: { start: string; end: string };
+  emissions: {
+    total: number;
+    byScope: { scope1: number; scope2: number; scope3: number };
+    categories: Array<{ name: string; total: number }>;
+  };
+  dataQuality: { totalEntries: number; entriesWithNotes: number };
+};
+
+type ReportData =
+  | { type: "emissions"; data: { summary: Record<string, unknown>; details: EmissionWithUser[] } }
+  | { type: "users"; data: UserWithStats[] }
+  | { type: "compliance"; data: ComplianceReport }
+  | { type: "audit"; data: ActivityLogWithUser[] };
+
 export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin(request);
@@ -30,7 +98,7 @@ export async function GET(request: Request) {
     }
 
     // Build date filter
-    const dateFilter: any = {};
+    const dateFilter: { gte?: Date; lte?: Date } = {};
     if (startDate) {
       dateFilter.gte = new Date(startDate);
     }
@@ -38,13 +106,13 @@ export async function GET(request: Request) {
       dateFilter.lte = new Date(endDate);
     }
 
-    let reportData: any = null;
+    let reportData: ReportData | null = null;
     let reportName = "";
 
     switch (type) {
       case "emissions":
         reportName = "Emissions Summary Report";
-        const emissions = await prisma.emission.findMany({
+        const emissions: EmissionWithUser[] = await prisma.emission.findMany({
           where: {
             ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}),
@@ -72,14 +140,17 @@ export async function GET(request: Request) {
         };
 
         reportData = {
-          summary: emissionsSummary,
-          details: emissions,
+          type: "emissions",
+          data: {
+            summary: emissionsSummary,
+            details: emissions,
+          },
         };
         break;
 
       case "users":
         reportName = "User Activity Report";
-        const users = await prisma.user.findMany({
+        const users: UserWithCounts[] = await prisma.user.findMany({
           where: orgFilter,
           select: {
             id: true,
@@ -116,7 +187,7 @@ export async function GET(request: Request) {
           })
         );
 
-        reportData = usersWithStats;
+        reportData = { type: "users", data: usersWithStats };
         break;
 
       case "compliance":
@@ -139,7 +210,12 @@ export async function GET(request: Request) {
               },
             });
 
-        const allEmissions = await prisma.emission.findMany({
+        const allEmissions: Array<{
+          scope: string;
+          category: string;
+          co2e: number;
+          notes: string | null;
+        }> = await prisma.emission.findMany({
           where: {
             ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { date: dateFilter } : {}),
@@ -153,33 +229,39 @@ export async function GET(request: Request) {
             end: endDate || "Present",
           },
           emissions: {
-            total: allEmissions.reduce((sum, e) => sum + e.co2e, 0),
+            total: allEmissions.reduce((sum: number, e) => sum + e.co2e, 0),
             byScope: {
-              scope1: allEmissions.filter(e => e.scope === "Scope 1").reduce((sum, e) => sum + e.co2e, 0),
-              scope2: allEmissions.filter(e => e.scope === "Scope 2").reduce((sum, e) => sum + e.co2e, 0),
-              scope3: allEmissions.filter(e => e.scope === "Scope 3").reduce((sum, e) => sum + e.co2e, 0),
+              scope1: allEmissions
+                .filter((e) => e.scope === "Scope 1")
+                .reduce((sum: number, e) => sum + e.co2e, 0),
+              scope2: allEmissions
+                .filter((e) => e.scope === "Scope 2")
+                .reduce((sum: number, e) => sum + e.co2e, 0),
+              scope3: allEmissions
+                .filter((e) => e.scope === "Scope 3")
+                .reduce((sum: number, e) => sum + e.co2e, 0),
             },
             categories: Array.from(
-              new Set(allEmissions.map(e => e.category))
-            ).map(category => ({
+              new Set(allEmissions.map((e) => e.category))
+            ).map((category) => ({
               name: category,
               total: allEmissions
-                .filter(e => e.category === category)
-                .reduce((sum, e) => sum + e.co2e, 0),
+                .filter((e) => e.category === category)
+                .reduce((sum: number, e) => sum + e.co2e, 0),
             })),
           },
           dataQuality: {
             totalEntries: allEmissions.length,
-            entriesWithNotes: allEmissions.filter(e => e.notes).length,
+            entriesWithNotes: allEmissions.filter((e) => e.notes).length,
           },
         };
 
-        reportData = complianceData;
+        reportData = { type: "compliance", data: complianceData };
         break;
 
       case "audit":
         reportName = "Audit Trail Report";
-        const activityLogs = await prisma.activityLog.findMany({
+        const activityLogs: ActivityLogWithUser[] = await prisma.activityLog.findMany({
           where: {
             ...orgFilter,
             ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
@@ -197,7 +279,7 @@ export async function GET(request: Request) {
           orderBy: { createdAt: "desc" },
         });
 
-        reportData = activityLogs;
+        reportData = { type: "audit", data: activityLogs };
         break;
 
       default:
@@ -237,7 +319,7 @@ export async function GET(request: Request) {
           startDate,
           endDate,
         },
-        data: reportData,
+        data: reportData?.data ?? null,
       });
     }
 
@@ -246,42 +328,42 @@ export async function GET(request: Request) {
       let csv = "";
 
       // Convert to CSV based on type
-      switch (type) {
+      switch (reportData?.type) {
         case "emissions":
           csv = "Date,Scope,Category,Activity,Source,Quantity,Unit,Emission Factor,CO2e,User Name,User Email,Notes\n";
-          reportData.details.forEach((e: any) => {
+          reportData.data.details.forEach((e) => {
             csv += `${e.date},${e.scope},${e.category},${e.activity},${e.source},${e.quantity},${e.unit},${e.emissionFactor},${e.co2e},"${e.user?.name || ""}","${e.user?.email || ""}","${e.notes || ""}"\n`;
           });
           break;
 
         case "users":
           csv = "Name,Email,Role,Active,Last Login,Created At,Emissions Count,Financed Emissions Count,Activity Count,Total CO2e\n";
-          reportData.forEach((u: any) => {
+          reportData.data.forEach((u) => {
             csv += `"${u.name || ""}","${u.email}","${u.role}","${u.isActive}","${u.lastLoginAt || ""}","${u.createdAt}",${u._count.emissions},${u._count.financedEmissions},${u._count.activityLogs},${u.totalCo2e}\n`;
           });
           break;
 
         case "audit":
           csv = "Date,Action,Entity Type,Entity ID,Description,User Name,User Email\n";
-          reportData.forEach((a: any) => {
+          reportData.data.forEach((a) => {
             csv += `${a.createdAt},"${a.action}","${a.entityType}","${a.entityId || ""}","${a.description}","${a.user?.name || ""}","${a.user?.email || ""}"\n`;
           });
           break;
 
         case "compliance":
           csv = `Compliance Report\n`;
-          if (reportData.organization) {
-            csv += `Organization: ${reportData.organization.name}\n`;
+          if (reportData.data.organization) {
+            csv += `Organization: ${reportData.data.organization.name}\n`;
           } else {
             csv += `Organization: All Organizations (Super Admin View)\n`;
           }
-          csv += `Period: ${reportData.period.start} to ${reportData.period.end}\n\n`;
-          csv += `Total Emissions: ${reportData.emissions.total} kg CO2e\n`;
-          csv += `Scope 1: ${reportData.emissions.byScope.scope1} kg CO2e\n`;
-          csv += `Scope 2: ${reportData.emissions.byScope.scope2} kg CO2e\n`;
-          csv += `Scope 3: ${reportData.emissions.byScope.scope3} kg CO2e\n\n`;
+          csv += `Period: ${reportData.data.period.start} to ${reportData.data.period.end}\n\n`;
+          csv += `Total Emissions: ${reportData.data.emissions.total} kg CO2e\n`;
+          csv += `Scope 1: ${reportData.data.emissions.byScope.scope1} kg CO2e\n`;
+          csv += `Scope 2: ${reportData.data.emissions.byScope.scope2} kg CO2e\n`;
+          csv += `Scope 3: ${reportData.data.emissions.byScope.scope3} kg CO2e\n\n`;
           csv += "Category,Total CO2e\n";
-          reportData.emissions.categories.forEach((c: any) => {
+          reportData.data.emissions.categories.forEach((c) => {
             csv += `"${c.name}",${c.total}\n`;
           });
           break;

@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { EmissionUpdateSchema, formatZodErrors } from '@/lib/validations';
@@ -129,7 +130,7 @@ export async function PUT(
     const data = validation.data;
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: Prisma.EmissionUpdateInput = {};
 
     // If quantity or emission factor changed, recalculate CO2e
     let shouldRecalculate = false;

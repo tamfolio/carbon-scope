@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20;
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.FinancedEmissionWhereInput = {
       userId: user.id,
     };
 

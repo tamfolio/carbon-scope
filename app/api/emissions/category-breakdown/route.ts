@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build base where clause
-    const baseWhere: any = {
+    const baseWhere: Prisma.EmissionWhereInput = {
       userId: user.id,
     };
 
