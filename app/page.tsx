@@ -242,7 +242,7 @@ export default function Home() {
                 style={{ animationDelay: "0.1s" }}
               >
                 <Leaf className="mr-2 h-3 w-3 text-primary" />
-                Trusted by 10,000+ Organizations
+                Trusted by 50+ Organizations
               </Badge>
 
               {/* Headline */}
@@ -351,11 +351,11 @@ export default function Home() {
                 style={{ animationDelay: "1s" }}
               >
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-foreground">50M+</div>
+                  <div className="text-3xl font-bold text-foreground">15M+</div>
                   <div className="text-sm text-muted-foreground mt-1">Tons CO₂ Tracked</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-foreground">10,000+</div>
+                  <div className="text-3xl font-bold text-foreground">50+</div>
                   <div className="text-sm text-muted-foreground mt-1">Organizations</div>
                 </div>
                 <div className="text-center">
