@@ -530,11 +530,11 @@ export default function Home() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-foreground mb-2">10,000+</div>
+                  <div className="text-4xl font-bold text-foreground mb-2">50+</div>
                   <div className="text-muted-foreground">Organizations Trust Us</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-foreground mb-2">50M+</div>
+                  <div className="text-4xl font-bold text-foreground mb-2">15M+</div>
                   <div className="text-muted-foreground">Tons CO₂ Tracked</div>
                 </div>
                 <div className="text-center">
@@ -551,7 +551,7 @@ export default function Home() {
         </section>
 
         {/* Benefits Section */}
-        <section className="py-20 bg-background">
+        <section className="py-20 bg-background ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div
@@ -615,7 +615,7 @@ export default function Home() {
         </section>
 
         {/* Testimonials & Case Studies Section */}
-        <section className="py-20 bg-muted/30">
+        <section className="py-20 bg-muted/30 ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
               <Badge variant="secondary" className="mb-4">
@@ -624,7 +624,7 @@ export default function Home() {
               <h2 className="text-4xl font-bold text-foreground">
                 Trusted by Leading Organizations
               </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto ">
                 See how organizations like yours are achieving their sustainability goals
               </p>
             </div>

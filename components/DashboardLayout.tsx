@@ -197,7 +197,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const navigationGroups = getNavigationGroups(userData?.role);
 
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full flex-col ">
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border/40 px-6">
           <Link href="/dashboard" className="flex items-center space-x-2 group">
