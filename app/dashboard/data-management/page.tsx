@@ -101,10 +101,11 @@ export default function DataManagementPage() {
   // State for emissions data
   const [filteredEmissions, setFilteredEmissions] = useState<EmissionRecord[]>([]);
 
-  // Load emissions on mount
-  useEffect(() => {
-    loadEmissions();
-  }, [loadEmissions]);
+  // Show alert
+  const showAlert = useCallback((type: "success" | "error", message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
+  }, []);
 
   // Load emissions from API
   const loadEmissions = useCallback(async () => {
@@ -125,13 +126,12 @@ export default function DataManagementPage() {
     } catch {
       showAlert("error", "Failed to load emissions data");
     }
-  }, []);
+  }, [showAlert]);
 
-  // Show alert
-  const showAlert = (type: "success" | "error", message: string) => {
-    setAlert({ type, message });
-    setTimeout(() => setAlert(null), 5000);
-  };
+  // Load emissions on mount
+  useEffect(() => {
+    loadEmissions();
+  }, [loadEmissions]);
 
   // Handle file selection for bulk import
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
