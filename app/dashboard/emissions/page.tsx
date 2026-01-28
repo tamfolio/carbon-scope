@@ -125,11 +125,6 @@ function EmissionsPageContent() {
   const [selectedEmissions, setSelectedEmissions] = useState<string[]>([]);
   const [batchMode, setBatchMode] = useState(false);
 
-  // Load emissions on mount
-  useEffect(() => {
-    loadEmissions();
-  }, [loadEmissions]);
-
   // Handle tab query parameter
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -216,6 +211,15 @@ function EmissionsPageContent() {
     setFilteredEmissions(filtered);
   }, [searchTerm, filterScope, filterCategory, emissions]);
 
+  // Show alert
+  const showAlert = useCallback(
+    (type: "success" | "error", message: string) => {
+      setAlert({ type, message });
+      setTimeout(() => setAlert(null), 5000);
+    },
+    []
+  );
+
   // Load emissions from API
   const loadEmissions = useCallback(async () => {
     setLoading(true);
@@ -241,6 +245,11 @@ function EmissionsPageContent() {
     }
   }, [showAlert]);
 
+  // Load emissions on mount
+  useEffect(() => {
+    loadEmissions();
+  }, [loadEmissions]);
+
   // Reset form
   const resetForm = () => {
     setScope("Scope 1");
@@ -257,15 +266,6 @@ function EmissionsPageContent() {
     setEditMode(false);
     setEditingId(null);
   };
-
-  // Show alert
-  const showAlert = useCallback(
-    (type: "success" | "error", message: string) => {
-      setAlert({ type, message });
-      setTimeout(() => setAlert(null), 5000);
-    },
-    []
-  );
 
   // Validate form
   const validateForm = (): boolean => {

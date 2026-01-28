@@ -32,13 +32,34 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const { theme } = useTheme();
   const [mounted] = useState(true);
   const [activeTab, setActiveTab] = useState<"testimonials" | "case-studies">("testimonials");
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-animate]"));
+    if (!elements.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
 
   const features = [
     {
@@ -220,7 +241,8 @@ export default function Home() {
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
         <section
-          className="relative overflow-hidden py-20 lg:py-32"
+          data-animate
+          className="relative overflow-hidden py-20 lg:py-32 reveal-section"
           style={{
             background:
               mounted && theme === "dark"
@@ -372,7 +394,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-muted/30">
+        <section data-animate className="py-20 bg-muted/30 reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
               <Badge variant="secondary" className="mb-4">
@@ -414,7 +436,7 @@ export default function Home() {
         </section>
 
         {/* Solutions Section */}
-        <section className="py-20 bg-background">
+        <section data-animate className="py-20 bg-background reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
               <Badge variant="secondary" className="mb-4">
@@ -551,7 +573,7 @@ export default function Home() {
         </section>
 
         {/* Benefits Section */}
-        <section className="py-20 bg-background ">
+        <section data-animate className="py-20 bg-background reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div
@@ -615,7 +637,7 @@ export default function Home() {
         </section>
 
         {/* Testimonials & Case Studies Section */}
-        <section className="py-20 bg-muted/30 ">
+        <section data-animate className="py-20 bg-muted/30 reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
               <Badge variant="secondary" className="mb-4">
@@ -649,7 +671,7 @@ export default function Home() {
 
             {/* Testimonials Tab */}
             {activeTab === "testimonials" && (
-              <div className="space-y-12">
+              <div key="testimonials" className="space-y-12 tab-fade">
                 {/* Featured Testimonial Carousel */}
                 <div className="relative max-w-5xl mx-auto">
                   <Card className="border-2 border-primary/20 shadow-2xl bg-card/80 backdrop-blur-sm">
@@ -761,7 +783,7 @@ export default function Home() {
 
             {/* Case Studies Tab */}
             {activeTab === "case-studies" && (
-              <div className="space-y-8">
+              <div key="case-studies" className="space-y-8 tab-fade">
                 {caseStudies.map((study, index) => (
                   <Card key={index} className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-xl hover:shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden">
                     <CardContent className="p-0">
@@ -828,7 +850,7 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
-        <section className="py-20 bg-background">
+        <section data-animate className="py-20 bg-background reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
               <Badge variant="secondary" className="mb-4">
@@ -995,7 +1017,8 @@ export default function Home() {
 
         {/* CTA Section */}
         <section
-          className="py-20 text-primary-foreground dark:text-foreground"
+          data-animate
+          className="py-20 text-primary-foreground dark:text-foreground reveal-section"
           style={{
             background:
               mounted && theme === "dark"
@@ -1088,6 +1111,17 @@ export default function Home() {
           }
         }
 
+        @keyframes tab-fade {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .animate-fade-in {
           animation: fade-in 0.8s ease-out both;
         }
@@ -1098,6 +1132,34 @@ export default function Home() {
 
         .animate-fade-in-right {
           animation: fade-in-right 0.8s ease-out both;
+        }
+
+        .tab-fade {
+          animation: tab-fade 420ms ease-out both;
+        }
+
+        .reveal-section {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 800ms ease, transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: opacity, transform;
+        }
+
+        .reveal-section.is-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fade-in,
+          .animate-slide-up,
+          .animate-fade-in-right,
+          .tab-fade,
+          .reveal-section {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+          }
         }
       `}</style>
     </>
