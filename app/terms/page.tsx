@@ -17,26 +17,26 @@ import {
 
 const toc = [
   { href: "#overview", label: "Overview" },
-  { href: "#eligibility", label: "Eligibility" },
-  { href: "#accounts", label: "Accounts" },
+  { href: "#description", label: "Description of the Services" },
+  { href: "#accounts", label: "Account Registration and Use" },
   { href: "#usage", label: "Acceptable Use" },
-  { href: "#data", label: "Data & Privacy" },
-  { href: "#fees", label: "Fees & Billing" },
+  { href: "#data", label: "Customer Data and Responsibilities" },
   { href: "#ip", label: "Intellectual Property" },
+  { href: "#fees", label: "Fees and Payment" },
   { href: "#confidentiality", label: "Confidentiality" },
   { href: "#disclaimer", label: "Disclaimers" },
-  { href: "#liability", label: "Limitation of Liability" },
-  { href: "#termination", label: "Termination" },
+  { href: "limitation", label: "Limitation of Liability"},
+  { href: "#termination", label: "Suspension and Termination" },
   { href: "#law", label: "Governing Law" },
-  { href: "#contact", label: "Contact" },
+  { href: "#changes", label: "Changes to These Terms" },
+  { href: "#contact", label: "Contact Information" },
 ];
 
 const highlights = [
   {
     icon: BookOpen,
     title: "Plain-language summary",
-    description:
-      "We use clear sections so teams can find what matters fast.",
+    description: "We use clear sections so teams can find what matters fast.",
   },
   {
     icon: Shield,
@@ -47,8 +47,7 @@ const highlights = [
   {
     icon: FileCheck,
     title: "Compliance ready",
-    description:
-      "Designed with sustainability reporting workflows in mind.",
+    description: "Designed with sustainability reporting workflows in mind.",
   },
 ];
 
@@ -107,7 +106,9 @@ export default function TermsOfServicePage() {
                     return (
                       <div key={item.title} className="space-y-2">
                         <Icon className="h-6 w-6 text-primary" />
-                        <p className="font-semibold text-foreground">{item.title}</p>
+                        <p className="font-semibold text-foreground">
+                          {item.title}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {item.description}
                         </p>
@@ -123,43 +124,64 @@ export default function TermsOfServicePage() {
                     1. Overview
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    By accessing or using CarbonScope 360, you agree to these
-                    Terms. If you are using the platform on behalf of an
-                    organization, you confirm that you have authority to bind
-                    that organization to these Terms.
+                    These Terms and Conditions (“Terms”) govern access to and
+                    use of the CarbonScope360 website, online platform,
+                    software, tools, and related services (collectively, the
+                    “Services”) operated by CarbonScope360 and its affiliates
+                    (“CarbonScope360,” “we,” “us,” or “our”).
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    We may update these Terms to reflect platform improvements,
-                    regulatory changes, or operational needs. When we do, we will
-                    update the effective date above and, if the changes are
-                    material, provide a reasonable notice.
+                    These Terms apply to all visitors, users, and organisations
+                    that access or use the Services. By accessing the Services,
+                    creating an account, or using any part of the platform, you
+                    confirm that you have read, understood, and agreed to be
+                    bound by these Terms. If you are using the Services on
+                    behalf of an organisation, you confirm that you have the
+                    authority to accept these Terms on behalf of that
+                    organisation. If you do not agree to these Terms, you must
+                    not access or use the Services.
                   </p>
                 </section>
 
-                <section id="eligibility" className="space-y-4">
+                <section id="description" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    2. Eligibility
+                    2. Description of the Services
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    You must be at least 18 years old and able to enter into a
-                    binding agreement to use the platform. Certain services may
-                    require additional verification or regulatory checks.
+                    CarbonScope360 is an online carbon accounting and emissions
+                    management platform designed to support organisations in
+                    measuring, tracking, managing, and reporting greenhouse gas
+                    emissions and related sustainability information. The
+                    Services may include emissions calculations, analytics,
+                    dashboards, reporting tools, data visualisation features,
+                    gap analysis, improvement insights, and other
+                    sustainability-related functionalities, as well as platform
+                    communications and customer support. CarbonScope360 may
+                    update, improve, modify, suspend, or discontinue any part of
+                    the Services from time to time. We do not guarantee that
+                    every feature or functionality will always be available.
                   </p>
                 </section>
 
                 <section id="accounts" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    3. Accounts
+                    3. Account Registration and Use
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    You are responsible for safeguarding login credentials and
-                    for all activity that occurs under your account. Please
-                    notify us immediately of any unauthorized access.
+                    Certain features of the Services require account
+                    registration. When creating an account, you agree to provide
+                    accurate, current, and complete information and to keep your
+                    account information up to date.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    We may suspend or restrict access if we detect unusual
-                    activity, suspected compromise, or violations of these
-                    Terms.
+                    You are responsible for maintaining the confidentiality of
+                    your login credentials and for all activities carried out
+                    through your account. You must notify CarbonScope360
+                    promptly if you believe your account has been accessed or
+                    used without authorisation. CarbonScope360 is not
+                    responsible for any loss or damage arising from unauthorised
+                    use of your account where such use results from your failure
+                    to safeguard your login information.
                   </p>
                 </section>
 
@@ -168,50 +190,105 @@ export default function TermsOfServicePage() {
                     4. Acceptable Use
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    You agree not to misuse the platform, including attempting
-                    to disrupt service, access data you do not own, or reverse
-                    engineer the software. Use of the platform must comply with
-                    applicable laws and environmental reporting standards.
+                    You agree to use the Services only for lawful purposes and
+                    in accordance with these Terms. You must not misuse the
+                    platform, interfere with its operation, attempt to gain
+                    unauthorised access to systems or data, upload harmful or
+                    malicious code, or use the Services in a way that could
+                    damage, disable, or impair CarbonScope360 or other users.
+                    You must not copy, modify, reverse engineer, decompile, or
+                    otherwise attempt to access the source code or technical
+                    components of the Services, except where such actions are
+                    permitted by applicable law.
                   </p>
                 </section>
 
                 <section id="data" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    5. Data & Privacy
+                    5. Customer Data and Responsibilities
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    You retain ownership of your data. We process your data to
-                    provide analytics, dashboards, and reporting features. Our
-                    Privacy Policy explains how data is collected, used, and
-                    protected.
+                    Any data uploaded, entered, or processed through the
+                    platform by you, including emissions data, sustainability
+                    data, operational data, or related information (“Customer
+                    Data”), remains your responsibility.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    You are responsible for ensuring you have rights to upload
-                    any data, including supplier or employee information, and
-                    for complying with your own legal obligations.
+                    You confirm that you have the legal right and authority to
+                    provide Customer Data to CarbonScope360 and that such data
+                    does not violate any applicable law or third-party rights.
+                    CarbonScope360 processes Customer Data only to provide the
+                    Services. Customers are responsible for ensuring that the
+                    data they upload or use within the platform is accurate and
+                    complete. CarbonScope360 does not independently verify
+                    Customer Data and is not responsible for decisions,
+                    disclosures, reports, or outcomes based on such data.
                   </p>
-                </section>
-
-                <section id="fees" className="space-y-4">
-                  <h2 className="text-2xl font-semibold text-foreground">
-                    6. Fees & Billing
-                  </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Paid plans are billed in advance on a subscription basis.
-                    Taxes may apply. You can cancel at any time, and your plan
-                    remains active until the end of the billing period.
+                    CarbonScope360 processes Customer Data only to provide the
+                    Services. Customers are responsible for ensuring that the
+                    data they upload or use within the platform is accurate and
+                    complete. CarbonScope360 does not independently verify
+                    Customer Data and is not responsible for decisions,
+                    disclosures, reports, or outcomes based on such data.
                   </p>
                 </section>
 
                 <section id="ip" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    7. Intellectual Property
+                    6. Intellectual Property
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    CarbonScope 360, including its software, branding, and
-                    content, is protected by intellectual property laws. These
-                    Terms grant you a limited, non-exclusive license to use the
-                    platform for your internal business purposes.
+                    All intellectual property rights in and to the Services,
+                    including the platform, software, interfaces, designs,
+                    logos, trademarks, content, and documentation, are owned by
+                    or licensed to CarbonScope360. You are granted a limited,
+                    non-exclusive, non-transferable, and revocable right to
+                    access and use the Services solely for your internal
+                    business purposes. You may not copy, distribute, sell,
+                    sublicense, or otherwise exploit any part of the Services
+                    without prior authorisation from CarbonScope360.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    You are granted a limited, non-exclusive, non-transferable,
+                    and revocable right to access and use the Services solely
+                    for your internal business purposes. You may not copy,
+                    distribute, sell, sublicense, or otherwise exploit any part
+                    of the Services without prior authorisation from
+                    CarbonScope360.
+                  </p>
+                </section>
+
+                <section id="fees" className="space-y-4">
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    7. Fees and Payment
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Certain parts of the Services may be offered for a fee.
+                    Pricing, billing terms, and any applicable charges will be
+                    clearly displayed on the platform or otherwise communicated
+                    to you before payment is required. By selecting a paid plan,
+                    submitting payment details, making payment through the
+                    platform, or continuing to use paid Services after being
+                    informed of applicable fees, you agree to pay the stated
+                    fees in accordance with the applicable billing terms. Unless
+                    otherwise stated, all fees are non-refundable.
+                    CarbonScope360 may suspend or restrict access to paid
+                    Services if payment is not received when due.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    By selecting a paid plan, submitting payment details, making
+                    payment through the platform, or continuing to use paid
+                    Services after being informed of applicable fees, you agree
+                    to pay the stated fees in accordance with the applicable
+                    billing terms. Unless otherwise stated, all fees are
+                    non-refundable. CarbonScope360 may suspend or restrict
+                    access to paid Services if payment is not received when due.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Unless otherwise stated, all fees are non-refundable.
+                    CarbonScope360 may suspend or restrict access to paid
+                    Services if payment is not received when due.
                   </p>
                 </section>
 
@@ -220,11 +297,23 @@ export default function TermsOfServicePage() {
                     8. Confidentiality
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Each party agrees to protect the other party&apos;s
-                    confidential information and use it only to perform under
-                    these Terms. Confidential information does not include
-                    information that is publicly available or independently
-                    developed without access to the other party&apos;s data.
+                    During your use of the Services, you may have access to
+                    information relating to CarbonScope360 that is not publicly
+                    available, meaning it is not openly published or accessible
+                    to the general public and is shared only with users through
+                    controlled access such as accounts, communications, or
+                    support interactions. This information may include details
+                    about the platform’s features, functionality, pricing,
+                    technical processes, or internal operations (“Confidential
+                    Information”). You agree to keep such Confidential
+                    Information confidential and to use it only in connection
+                    with your use of the Services, unless disclosure is required
+                    by law.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    You agree to keep such Confidential Information confidential
+                    and to use it only in connection with your use of the
+                    Services, unless disclosure is required by law.
                   </p>
                 </section>
 
@@ -233,10 +322,31 @@ export default function TermsOfServicePage() {
                     9. Disclaimers
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    The platform is provided on an &quot;as is&quot; and
-                    &quot;as available&quot; basis. We do not warrant that the
-                    service will be uninterrupted or error-free, or that output
-                    will meet specific regulatory approvals.
+                    CarbonScope360 is designed to actively support organisations
+                    in understanding their sustainability performance,
+                    identifying gaps, and improving emissions management and
+                    reporting practices. We take reasonable steps to ensure that
+                    the Services operate reliably and that calculations and
+                    insights are generated using recognised methodologies and
+                    industry practices.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    The accuracy and usefulness of outputs depend on the
+                    quality, completeness, and correctness of the data provided
+                    by users, as well as applicable standards, assumptions, and
+                    regulatory requirements, which may vary by jurisdiction and
+                    change over time.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    The Services provide tools, insights, and guidance to inform
+                    decision-making. Organisations remain responsible for how
+                    outputs are applied in practice and for meeting applicable
+                    regulatory, reporting, or disclosure requirements.
+                    CarbonScope360 supports organisations in understanding,
+                    managing, and improving sustainability and emissions
+                    performance, but actual outcomes depend on how the Services
+                    are used, the quality of data provided, and external factors
+                    beyond CarbonScope360’s control.
                   </p>
                 </section>
 
@@ -245,20 +355,43 @@ export default function TermsOfServicePage() {
                     10. Limitation of Liability
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    To the maximum extent permitted by law, CarbonScope 360 will
-                    not be liable for any indirect, incidental, or consequential
-                    damages, including loss of profits, revenue, or data.
+                    To the maximum extent permitted by law, CarbonScope360 shall
+                    not be liable for any indirect, incidental, consequential,
+                    special, or punitive damages, including loss of profits,
+                    revenue, data, or business opportunities, arising from or
+                    related to your use of, or inability to use, the Services.
+                    CarbonScope360’s total liability for any claim arising out
+                    of or related to these Terms or the Services shall not
+                    exceed the total amount paid by you to CarbonScope360 for
+                    the Services during the twelve (12) months preceding the
+                    event giving rise to the claim.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    CarbonScope360’s total liability for any claim arising out
+                    of or related to these Terms or the Services shall not
+                    exceed the total amount paid by you to CarbonScope360 for
+                    the Services during the twelve (12) months preceding the
+                    event giving rise to the claim.
                   </p>
                 </section>
 
                 <section id="termination" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    11. Termination
+                    11. Suspension and Termination
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    You may stop using the platform at any time. We may suspend
-                    or terminate access if you violate these Terms or if
-                    continued service would create legal or security risk.
+                    You may stop using the Services at any time. CarbonScope360
+                    may suspend or terminate access to the Services if you
+                    breach these Terms, misuse the platform, fail to make
+                    required payments, or pose a legal or security risk. Upon
+                    termination, your right to access and use the Services will
+                    end immediately. Provisions that by their nature should
+                    survive termination will continue to apply.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Upon termination, your right to access and use the Services
+                    will end immediately. Provisions that by their nature should
+                    survive termination will continue to apply.
                   </p>
                 </section>
 
@@ -267,18 +400,38 @@ export default function TermsOfServicePage() {
                     12. Governing Law
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    These Terms are governed by the laws of your primary place
-                    of business, unless otherwise required by local regulation.
+                    These Terms are governed by and interpreted in accordance
+                    with the laws of the Federal Republic of Nigeria, without
+                    regard to conflict of law principles.
                   </p>
                 </section>
 
-                <section id="contact" className="space-y-4">
+                <section id="changes" className="space-y-4">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    13. Contact
+                    13. Changes to These Terms
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Questions about these Terms? Reach out to our legal team at
-                    legal@carbonscope360.com or via the contact form.
+                    CarbonScope360 may update these Terms from time to time.
+                    When updates are made, the “Last Updated” date will be
+                    revised. Continued use of the Services after such updates
+                    constitutes acceptance of the updated Terms.
+                  </p>
+                </section>
+                <section id="contact" className="space-y-4">
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    14. Contact Information
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    If you have any questions or concerns regarding these Terms
+                    or the Services, you may contact us at:
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Email: legal@carbonscope360.com Address: 7th Floor, Plot
+                    634, Adeyemo Alakija, Victoria Island, Lagos.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Address: 7th Floor, Plot 634, Adeyemo Alakija, Victoria
+                    Island, Lagos.
                   </p>
                 </section>
               </div>
