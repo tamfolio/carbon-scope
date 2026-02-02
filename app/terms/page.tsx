@@ -426,12 +426,12 @@ export default function TermsOfServicePage() {
                     or the Services, you may contact us at:
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    Email: legal@carbonscope360.com Address: 7th Floor, Plot
-                    634, Adeyemo Alakija, Victoria Island, Lagos.
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
+                    Email: legal@carbonscope360.com <br/>
                     Address: 7th Floor, Plot 634, Adeyemo Alakija, Victoria
                     Island, Lagos.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    
                   </p>
                 </section>
               </div>

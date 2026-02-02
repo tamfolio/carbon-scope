@@ -47,10 +47,10 @@ export default function Header() {
             <Link
               href="/"
               className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              // onClick={(e) => {
+              //   e.preventDefault();
+              //   window.scrollTo({ top: 0, behavior: 'smooth' });
+              // }}
             >
               <Home className="w-4 h-4" />
               Home
