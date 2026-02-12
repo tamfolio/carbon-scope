@@ -138,10 +138,10 @@ export default function Home() {
 
   const testimonials = [
     {
-      name: "Sarah Chen",
+      name: "Priscilla Joshua",
       role: "Chief Sustainability Officer",
-      company: "GreenTech Solutions",
-      industry: "Technology",
+      company: "Atunlo Sustainability & Technologies Limited",
+      industry: "Climate Technology",
       quote: "CarbonScope360 made our sustainability reporting far more manageable. We finally had one source of truth for emissions data, which helped us make measurable reductions without increasing compliance risk.",
       rating: 5,
       icon: Building2,

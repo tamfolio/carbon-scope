@@ -225,9 +225,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                        "flex items-center  space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                         isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
+                          ? "bg-white text-primary shadow-sm border border-red-500"
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
