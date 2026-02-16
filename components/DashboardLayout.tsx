@@ -227,7 +227,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       className={cn(
                         "flex items-center  space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                         isActive
-                          ? "bg-white text-primary shadow-sm border border-red-500"
+                          ? "bg-white text-primary shadow-sm border "
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
