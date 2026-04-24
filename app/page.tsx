@@ -37,11 +37,15 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const { theme } = useTheme();
   const [mounted] = useState(true);
-  const [activeTab, setActiveTab] = useState<"testimonials" | "case-studies">("testimonials");
+  const [activeTab, setActiveTab] = useState<"testimonials" | "case-studies">(
+    "testimonials",
+  );
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-animate]"));
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-animate]"),
+    );
     if (!elements.length) return undefined;
 
     const observer = new IntersectionObserver(
@@ -53,7 +57,7 @@ export default function Home() {
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
+      { threshold: 0.15, rootMargin: "0px 0px -10% 0px" },
     );
 
     elements.forEach((el) => observer.observe(el));
@@ -142,7 +146,8 @@ export default function Home() {
       role: "Chief Sustainability Officer",
       company: "Atunlo Sustainability & Technologies Limited",
       industry: "Climate Technology",
-      quote: "CarbonScope360 made our sustainability reporting far more manageable. We finally had one source of truth for emissions data, which helped us make measurable reductions without increasing compliance risk.",
+      quote:
+        "CarbonScope360 made our sustainability reporting far more manageable. We finally had one source of truth for emissions data, which helped us make measurable reductions without increasing compliance risk.",
       rating: 5,
       icon: Building2,
     },
@@ -151,7 +156,8 @@ export default function Home() {
       role: "Environmental Director",
       company: "PennyTree Business Limited",
       industry: "FinTech",
-      quote: "The PCAF tools removed a lot of manual work from our reporting process. What used to take weeks now takes days, and our team can focus on actual improvements instead of spreadsheets",
+      quote:
+        "The PCAF tools removed a lot of manual work from our reporting process. What used to take weeks now takes days, and our team can focus on actual improvements instead of spreadsheets",
       rating: 5,
       icon: Factory,
     },
@@ -160,7 +166,8 @@ export default function Home() {
       role: "ESG Manager",
       company: "TreegarXCorp",
       industry: "Financial Services",
-      quote: "CarbonScope360 helped us clearly see the carbon exposure across our portfolio. That visibility made it easier to have informed conversations with stakeholders about our net-zero strategy.",
+      quote:
+        "CarbonScope360 helped us clearly see the carbon exposure across our portfolio. That visibility made it easier to have informed conversations with stakeholders about our net-zero strategy.",
       rating: 5,
       icon: Briefcase,
     },
@@ -169,7 +176,8 @@ export default function Home() {
       role: "Sustainability Lead",
       company: "Atunlo Green Earth Foundation",
       industry: "Foundation",
-      quote: "The Scope 3 insights highlighted inefficiencies we hadn’t fully understood before. With better data on our logistics footprint, we were able to adjust routes and suppliers more intentionally.",
+      quote:
+        "The Scope 3 insights highlighted inefficiencies we hadn’t fully understood before. With better data on our logistics footprint, we were able to adjust routes and suppliers more intentionally.",
       rating: 5,
       icon: Building2,
     },
@@ -178,7 +186,8 @@ export default function Home() {
       role: "VP Operations",
       company: "Penn Bank",
       industry: "Energy",
-      quote: "Having real-time emissions data changed how we make operational decisions. The accuracy and consistency of the platform gave us confidence in the numbers we report internally and externally.",
+      quote:
+        "Having real-time emissions data changed how we make operational decisions. The accuracy and consistency of the platform gave us confidence in the numbers we report internally and externally.",
       rating: 5,
       icon: Zap,
     },
@@ -190,7 +199,8 @@ export default function Home() {
       industry: "Technology",
       icon: Building2,
       challenge: "Complex multi-regional carbon accounting across 15 countries",
-      solution: "Automated Scope 1-3 tracking with real-time regional compliance monitoring",
+      solution:
+        "Automated Scope 1-3 tracking with real-time regional compliance monitoring",
       results: [
         { label: "31% reduction in total emissions", icon: TrendingUp },
         { label: "90% time savings on reporting", icon: CheckCircle },
@@ -215,7 +225,8 @@ export default function Home() {
       company: "Investment Partners LLC",
       industry: "Financial Services",
       icon: Briefcase,
-      challenge: "Portfolio carbon risk assessment for $5B investment portfolio",
+      challenge:
+        "Portfolio carbon risk assessment for $5B investment portfolio",
       solution: "Integrated financed emissions tracking with risk analytics",
       results: [
         { label: "100% portfolio emission visibility", icon: TrendingUp },
@@ -231,7 +242,9 @@ export default function Home() {
   };
 
   const prevTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setCurrentTestimonial(
+      (prev) => (prev - 1 + testimonials.length) % testimonials.length,
+    );
   };
 
   return (
@@ -282,7 +295,9 @@ export default function Home() {
                   className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in"
                   style={{ animationDelay: "0.4s" }}
                 >
-                  Complete carbon accounting platform for SMEs and financial institutions. Track, measure, and report emissions across your entire value chain with enterprise-grade accuracy.
+                  Complete carbon accounting platform for SMEs and financial
+                  institutions. Track, measure, and report emissions across your
+                  entire value chain with enterprise-grade accuracy.
                 </p>
               </div>
 
@@ -302,7 +317,7 @@ export default function Home() {
                   size="lg"
                   className="text-base px-8 h-12 group"
                   onClick={() => {
-                    const event = new CustomEvent('openCalculator');
+                    const event = new CustomEvent("openCalculator");
                     window.dispatchEvent(event);
                   }}
                 >
@@ -322,14 +337,6 @@ export default function Home() {
                 <Badge variant="outline" className="px-3 py-1">
                   ISSB Ready
                 </Badge>
-                <span className="text-muted-foreground">·</span>
-                <Badge variant="outline" className="px-3 py-1">
-                  ISO 14064
-                </Badge>
-                <span className="text-muted-foreground">·</span>
-                <Badge variant="outline" className="px-3 py-1">
-                  SOC 2 Type II
-                </Badge>
               </div>
 
               {/* Dashboard Visual with Metrics */}
@@ -341,18 +348,30 @@ export default function Home() {
                   {/* Metric 1 */}
                   <Card className="border-none shadow-lg hover:shadow-xl transition-all bg-card">
                     <CardContent className="p-6 text-center">
-                      <div className="text-5xl font-bold text-primary mb-2">94%</div>
-                      <div className="text-base font-semibold text-foreground mb-1">Data Quality</div>
-                      <div className="text-sm text-muted-foreground">Enterprise-grade accuracy</div>
+                      <div className="text-5xl font-bold text-primary mb-2">
+                        94%
+                      </div>
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Data Quality
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Enterprise-grade accuracy
+                      </div>
                     </CardContent>
                   </Card>
 
                   {/* Metric 2 */}
                   <Card className="border-none shadow-lg hover:shadow-xl transition-all bg-card">
                     <CardContent className="p-6 text-center">
-                      <div className="text-5xl font-bold text-primary mb-2">–23%</div>
-                      <div className="text-base font-semibold text-foreground mb-1">Emissions Reduced</div>
-                      <div className="text-sm text-muted-foreground">Average client reduction</div>
+                      <div className="text-5xl font-bold text-primary mb-2">
+                        –23%
+                      </div>
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Emissions Reduced
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Average client reduction
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -360,8 +379,12 @@ export default function Home() {
                   <Card className="border-none shadow-lg hover:shadow-xl transition-all bg-card">
                     <CardContent className="p-6 text-center">
                       <TrendingUp className="h-12 w-12 text-primary mx-auto mb-2" />
-                      <div className="text-base font-semibold text-foreground mb-1">Real-time Tracking</div>
-                      <div className="text-sm text-muted-foreground">Scope 1-3 monitoring</div>
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Real-time Tracking
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Scope 1-3 monitoring
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -374,19 +397,29 @@ export default function Home() {
               >
                 <div className="text-center">
                   <div className="text-3xl font-bold text-foreground">15M+</div>
-                  <div className="text-sm text-muted-foreground mt-1">Tons CO₂ Tracked</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Tons CO₂ Tracked
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-foreground">50+</div>
-                  <div className="text-sm text-muted-foreground mt-1">Organizations</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Organizations
+                  </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-foreground">99.9%</div>
-                  <div className="text-sm text-muted-foreground mt-1">Uptime</div>
+                  <div className="text-3xl font-bold text-foreground">
+                    99.9%
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Uptime
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-foreground">150+</div>
-                  <div className="text-sm text-muted-foreground mt-1">Countries</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Countries
+                  </div>
                 </div>
               </div>
             </div>
@@ -404,7 +437,9 @@ export default function Home() {
                 Complete Carbon Accounting Platform
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Everything you need to measure, track, and report emissions across all scopes with enterprise-grade accuracy and compliance standards.
+                Everything you need to measure, track, and report emissions
+                across all scopes with enterprise-grade accuracy and compliance
+                standards.
               </p>
             </div>
 
@@ -436,6 +471,7 @@ export default function Home() {
         </section>
 
         {/* Solutions Section */}
+        {/*
         <section data-animate className="py-20 bg-background reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
@@ -450,9 +486,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Solution Cards */}
             <div className="grid md:grid-cols-2 gap-8 mb-20">
-              {/* For SMEs & Corporates */}
               <Card className="relative border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
                 <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
                   Most Popular
@@ -495,7 +529,6 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* For Financial Institutions */}
               <Card className="relative border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
                 <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
                   Enterprise
@@ -539,7 +572,6 @@ export default function Home() {
               </Card>
             </div>
 
-            {/* Powering Global Sustainability */}
             <div className="text-center space-y-8 pt-12">
               <div className="space-y-2">
                 <h3 className="text-3xl font-bold text-foreground">
@@ -571,6 +603,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+      */}
 
         {/* Benefits Section */}
         <section data-animate className="py-20 bg-background reveal-section">
@@ -647,7 +680,8 @@ export default function Home() {
                 Trusted by Leading Organizations
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto ">
-                See how organizations like yours are achieving their sustainability goals
+                See how organizations like yours are achieving their
+                sustainability goals
               </p>
             </div>
 
@@ -680,15 +714,22 @@ export default function Home() {
                         {/* Icon */}
                         <div>
                           {(() => {
-                            const IconComponent = testimonials[currentTestimonial].icon;
-                            return <IconComponent className="h-12 w-12 text-primary" />;
+                            const IconComponent =
+                              testimonials[currentTestimonial].icon;
+                            return (
+                              <IconComponent className="h-12 w-12 text-primary" />
+                            );
                           })()}
                         </div>
 
                         {/* Rating */}
                         <div className="flex gap-1">
-                          {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
-                            <span key={i} className="text-yellow-500 text-2xl">★</span>
+                          {[
+                            ...Array(testimonials[currentTestimonial].rating),
+                          ].map((_, i) => (
+                            <span key={i} className="text-yellow-500 text-2xl">
+                              ★
+                            </span>
                           ))}
                         </div>
 
@@ -699,14 +740,20 @@ export default function Home() {
 
                         {/* Author Info */}
                         <div className="pt-6 border-t border-border/40 w-full">
-                          <p className="font-bold text-lg text-foreground">{testimonials[currentTestimonial].name}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{testimonials[currentTestimonial].role}</p>
+                          <p className="font-bold text-lg text-foreground">
+                            {testimonials[currentTestimonial].name}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {testimonials[currentTestimonial].role}
+                          </p>
                           <div className="flex items-center justify-center gap-2 mt-2">
                             <Badge variant="outline" className="text-xs">
                               {testimonials[currentTestimonial].company}
                             </Badge>
                             <span className="text-muted-foreground">·</span>
-                            <span className="text-xs text-muted-foreground">{testimonials[currentTestimonial].industry}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {testimonials[currentTestimonial].industry}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -750,12 +797,17 @@ export default function Home() {
                 {/* Additional Testimonials Grid */}
                 <div className="grid md:grid-cols-3 gap-6">
                   {testimonials.slice(0, 3).map((testimonial, index) => (
-                    <Card key={index} className="border-2 border-border/40 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-card/50 backdrop-blur-sm">
+                    <Card
+                      key={index}
+                      className="border-2 border-border/40 hover:border-primary/50 transition-all duration-300 hover:shadow-xl bg-card/50 backdrop-blur-sm"
+                    >
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
                           {(() => {
                             const IconComponent = testimonial.icon;
-                            return <IconComponent className="h-5 w-5 text-primary" />;
+                            return (
+                              <IconComponent className="h-5 w-5 text-primary" />
+                            );
                           })()}
                           <Badge variant="outline" className="text-xs">
                             {testimonial.industry}
@@ -763,16 +815,24 @@ export default function Home() {
                         </div>
                         <div className="flex gap-1 mb-3">
                           {[...Array(testimonial.rating)].map((_, i) => (
-                            <span key={i} className="text-yellow-500 text-sm">★</span>
+                            <span key={i} className="text-yellow-500 text-sm">
+                              ★
+                            </span>
                           ))}
                         </div>
                         <p className="text-sm italic mb-4 text-muted-foreground line-clamp-3">
                           &ldquo;{testimonial.quote}&rdquo;
                         </p>
                         <div className="pt-3 border-t border-border/40">
-                          <p className="font-semibold text-sm text-foreground">{testimonial.name}</p>
-                          <p className="text-xs text-muted-foreground">{testimonial.role}</p>
-                          <p className="text-xs text-muted-foreground">{testimonial.company}</p>
+                          <p className="font-semibold text-sm text-foreground">
+                            {testimonial.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {testimonial.role}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {testimonial.company}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -785,7 +845,10 @@ export default function Home() {
             {activeTab === "case-studies" && (
               <div key="case-studies" className="space-y-8 tab-fade">
                 {caseStudies.map((study, index) => (
-                  <Card key={index} className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-xl hover:shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden">
+                  <Card
+                    key={index}
+                    className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-xl hover:shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden"
+                  >
                     <CardContent className="p-0">
                       <div className="grid md:grid-cols-2 gap-0">
                         {/* Left Side - Challenge & Solution */}
@@ -793,25 +856,39 @@ export default function Home() {
                           <div className="flex items-center gap-3 mb-6">
                             {(() => {
                               const IconComponent = study.icon;
-                              return <IconComponent className="h-8 w-8 text-primary" />;
+                              return (
+                                <IconComponent className="h-8 w-8 text-primary" />
+                              );
                             })()}
                             <div>
-                              <h3 className="text-2xl font-bold text-foreground">{study.company}</h3>
-                              <Badge variant="secondary" className="mt-1">{study.industry}</Badge>
+                              <h3 className="text-2xl font-bold text-foreground">
+                                {study.company}
+                              </h3>
+                              <Badge variant="secondary" className="mt-1">
+                                {study.industry}
+                              </Badge>
                             </div>
                           </div>
 
                           <div className="space-y-6">
                             <div>
-                              <h4 className="text-sm font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider mb-2">Challenge</h4>
-                              <p className="text-base text-foreground leading-relaxed">{study.challenge}</p>
+                              <h4 className="text-sm font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider mb-2">
+                                Challenge
+                              </h4>
+                              <p className="text-base text-foreground leading-relaxed">
+                                {study.challenge}
+                              </p>
                             </div>
 
                             <div className="h-px bg-border/40" />
 
                             <div>
-                              <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Solution</h4>
-                              <p className="text-base text-foreground leading-relaxed">{study.solution}</p>
+                              <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
+                                Solution
+                              </h4>
+                              <p className="text-base text-foreground leading-relaxed">
+                                {study.solution}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -829,12 +906,19 @@ export default function Home() {
                                 "text-blue-600 dark:text-blue-400",
                                 "text-green-600 dark:text-green-400",
                                 "text-purple-600 dark:text-purple-400",
-                                "text-orange-600 dark:text-orange-400"
+                                "text-orange-600 dark:text-orange-400",
                               ];
                               return (
-                                <div key={resultIndex} className="flex items-start gap-4 p-4 rounded-lg bg-card/50 border border-border/40 hover:border-primary/40 transition-all duration-300 hover:shadow-md">
-                                  <ResultIcon className={`h-5 w-5 flex-shrink-0 ${iconColors[resultIndex % iconColors.length]}`} />
-                                  <p className="text-sm font-medium text-foreground pt-0.5">{result.label}</p>
+                                <div
+                                  key={resultIndex}
+                                  className="flex items-start gap-4 p-4 rounded-lg bg-card/50 border border-border/40 hover:border-primary/40 transition-all duration-300 hover:shadow-md"
+                                >
+                                  <ResultIcon
+                                    className={`h-5 w-5 flex-shrink-0 ${iconColors[resultIndex % iconColors.length]}`}
+                                  />
+                                  <p className="text-sm font-medium text-foreground pt-0.5">
+                                    {result.label}
+                                  </p>
                                 </div>
                               );
                             })}
@@ -850,6 +934,7 @@ export default function Home() {
         </section>
 
         {/* Pricing Section */}
+        {/* 
         <section data-animate className="py-20 bg-background reveal-section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-4 mb-16">
@@ -863,10 +948,10 @@ export default function Home() {
                 Choose the perfect plan for your sustainability journey
               </p>
             </div>
-
+            */}
             {/* Pricing Cards */}
+            {/*
             <div className="grid md:grid-cols-3 gap-8 mb-8">
-              {/* Starter Plan */}
               <Card className="border-2 hover:border-primary/50 transition-all">
                 <CardHeader>
                   <CardTitle className="text-2xl">Starter</CardTitle>
@@ -907,7 +992,6 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Professional Plan */}
               <Card className="border-2 border-primary relative hover:border-primary transition-all shadow-xl">
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
                   Most Popular
@@ -959,7 +1043,6 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Enterprise Plan */}
               <Card className="border-2 hover:border-primary/50 transition-all">
                 <CardHeader>
                   <CardTitle className="text-2xl">Enterprise</CardTitle>
@@ -1007,13 +1090,18 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+*/}
 
             {/* Footer Note */}
+            {/*
             <p className="text-center text-muted-foreground">
-              All plans include 30 day free trial • No setup fees • Cancel anytime
+              All plans include 30 day free trial • No setup fees • Cancel
+              anytime
             </p>
           </div>
         </section>
+
+        */}
 
         {/* CTA Section */}
         <section
@@ -1141,7 +1229,9 @@ export default function Home() {
         .reveal-section {
           opacity: 0;
           transform: translateY(24px);
-          transition: opacity 800ms ease, transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+          transition:
+            opacity 800ms ease,
+            transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
           will-change: opacity, transform;
         }
 
