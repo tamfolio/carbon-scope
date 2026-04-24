@@ -3,22 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --webpack",
-  "build": "prisma migrate deploy && prisma generate && next build --webpack",
-  "start": "next start",
-  "lint": "eslint",
-
-  "db:generate": "prisma generate",
-  "db:migrate": "prisma migrate dev",
-  "db:migrate:prod": "prisma migrate deploy",
-
-  "db:studio": "prisma studio",
-  "db:seed": "tsx prisma/seed.ts",
-  "make-admin": "tsx scripts/make-admin.ts",
-  "setup-org": "tsx scripts/setup-organization.ts",
-  "check-user": "tsx scripts/check-user.ts"
-}
-,
+    "dev": "node api.js && next dev --webpack",
+    "build": "node api.js && prisma migrate deploy && prisma generate && next build --webpack",
+    "start": "node api.js && next start",
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
+    "make-admin": "tsx scripts/make-admin.ts",
+    "setup-org": "tsx scripts/setup-organization.ts",
+    "check-user": "tsx scripts/check-user.ts"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
